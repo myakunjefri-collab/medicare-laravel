@@ -18,9 +18,14 @@
     @auth
         <!-- Navbar for authenticated dashboards -->
         <div class="navbar">
-            <div class="logo">
-                <i class="fas fa-notes-medical"></i>
-                <span>MedicareSystem</span>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <button id="sidebarToggle" style="background: transparent; border: none; color: var(--text-white); font-size: 1.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: var(--transition);">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="logo">
+                    <i class="fas fa-notes-medical"></i>
+                    <span>MedicareSystem</span>
+                </div>
             </div>
             <div class="user-info">
                 <span>Halo, {{ Auth::user()->role === 'dokter' ? 'Dr. ' : '' }}{{ Auth::user()->name }}</span>
@@ -33,16 +38,30 @@
             </div>
         </div>
 
-        <div class="app-container">
+        <div class="app-container" id="appContainer">
+            <!-- Sidebar Overlay for mobile -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
             <!-- Sidebar for authenticated dashboards -->
             <div class="sidebar">
+                <!-- Mobile Sidebar Header -->
+                <div class="sidebar-header" style="display: none; justify-content: space-between; align-items: center; padding-bottom: 16px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+                    <div style="font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; font-size: 1.1rem;">
+                        <i class="fas fa-notes-medical" style="color: var(--accent);"></i>
+                        <span>MedicareSystem</span>
+                    </div>
+                    <button id="sidebarClose" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 @if(Auth::user()->role === 'pasien')
                     <a href="/pasien" class="{{ $page === 'home' ? 'active' : '' }}"><i class="fas fa-home"></i> Dashboard</a>
                     <a href="/pasien/jadwal" class="{{ $page === 'jadwal' ? 'active' : '' }}"><i class="fas fa-calendar-alt"></i> Jadwal Praktik</a>
                     <a href="/pasien/chat" class="{{ $page === 'chat' ? 'active' : '' }}"><i class="fas fa-comments"></i> Konsultasi Chat</a>
+                    <a href="/pasien/chatbot" class="{{ $page === 'chatbot' ? 'active' : '' }}"><i class="fas fa-robot"></i> Asisten Medicare</a>
                     <a href="/pasien/rekam-medis" class="{{ $page === 'rekam' ? 'active' : '' }}"><i class="fas fa-notes-medical"></i> Rekam Medis</a>
                     <a href="/pasien/antrean" class="{{ $page === 'antrean' ? 'active' : '' }}"><i class="fas fa-ticket-alt"></i> Antrean Saya</a>
                     <a href="/pasien/pesanan-obat" class="{{ $page === 'daftar_pesanan' || $page === 'pesan_obat' ? 'active' : '' }}"><i class="fas fa-pills"></i> Pesanan Obat</a>
+                    <a href="/pasien/bantuan" class="{{ $page === 'bantuan' ? 'active' : '' }}"><i class="fas fa-question-circle"></i> Bantuan / CS</a>
                 @elseif(Auth::user()->role === 'dokter')
                     <a href="/dokter" class="{{ $page === 'home' ? 'active' : '' }}"><i class="fas fa-home"></i> Dashboard</a>
                     <a href="/dokter/jadwal" class="{{ $page === 'jadwal' ? 'active' : '' }}"><i class="fas fa-calendar-alt"></i> Jadwal Praktik</a>
@@ -59,6 +78,7 @@
                     <a href="/admin/rekam-medis" class="{{ $page === 'rekam' ? 'active' : '' }}"><i class="fas fa-notes-medical"></i> Rekam Medis</a>
                     <a href="/admin/berita" class="{{ $page === 'berita' ? 'active' : '' }}"><i class="fas fa-newspaper"></i> Kelola Berita</a>
                     <a href="/admin/pesanan-obat" class="{{ $page === 'pesanan_obat' ? 'active' : '' }}"><i class="fas fa-pills"></i> Kelola Pesanan</a>
+                    <a href="/admin/bantuan" class="{{ $page === 'bantuan' ? 'active' : '' }}"><i class="fas fa-headset"></i> Tiket Bantuan CS</a>
                 @endif
             </div>
 
@@ -86,5 +106,60 @@
     @endauth
 
     @yield('scripts')
+
+    @auth
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const sidebarToggle = document.getElementById('sidebarToggle');
+                const sidebarClose = document.getElementById('sidebarClose');
+                const sidebarOverlay = document.getElementById('sidebarOverlay');
+                const appContainer = document.getElementById('appContainer');
+                
+                // Load saved collapsed state for desktop
+                if (window.innerWidth > 768) {
+                    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                    if (isCollapsed) {
+                        appContainer.classList.add('sidebar-collapsed');
+                    }
+                }
+                
+                // Toggle sidebar
+                if (sidebarToggle) {
+                    sidebarToggle.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (window.innerWidth <= 768) {
+                            appContainer.classList.toggle('sidebar-open');
+                        } else {
+                            appContainer.classList.toggle('sidebar-collapsed');
+                            // Save state to localStorage
+                            const collapsed = appContainer.classList.contains('sidebar-collapsed');
+                            localStorage.setItem('sidebarCollapsed', collapsed);
+                        }
+                    });
+                }
+                
+                // Close sidebar on mobile
+                function closeMobileSidebar() {
+                    if (window.innerWidth <= 768) {
+                        appContainer.classList.remove('sidebar-open');
+                    }
+                }
+                
+                if (sidebarClose) {
+                    sidebarClose.addEventListener('click', closeMobileSidebar);
+                }
+                if (sidebarOverlay) {
+                    sidebarOverlay.addEventListener('click', closeMobileSidebar);
+                }
+                
+                // Close sidebar on mobile when window resized back to desktop
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth > 768) {
+                        appContainer.classList.remove('sidebar-open');
+                    }
+                });
+            });
+        </script>
+    @endauth
 </body>
 </html>

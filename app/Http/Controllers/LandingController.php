@@ -31,8 +31,23 @@ class LandingController extends Controller
 
         // Fetch registered doctors list to showcase on the landing page dynamically!
         $doctors = User::where('role', 'dokter')->get();
+        $berita = \App\Models\Berita::orderBy('tanggal', 'desc')->get();
+        $provinces = $this->getProvinces();
 
-        return view('landing', compact('health_data', 'doctors'));
+        return view('landing', compact('health_data', 'doctors', 'berita', 'provinces'));
+    }
+
+    private function getProvinces()
+    {
+        return [
+            'Aceh', 'Sumatera Utara', 'Sumatera Barat', 'Riau', 'Kepulauan Riau',
+            'Jambi', 'Sumatera Selatan', 'Kepulauan Bangka Belitung', 'Bengkulu', 'Lampung',
+            'DKI Jakarta', 'Jawa Barat', 'Banten', 'Jawa Tengah', 'DI Yogyakarta',
+            'Jawa Timur', 'Bali', 'Nusa Tenggara Barat', 'Nusa Tenggara Timur',
+            'Kalimantan Barat', 'Kalimantan Tengah', 'Kalimantan Selatan', 'Kalimantan Timur', 'Kalimantan Utara',
+            'Sulawesi Utara', 'Gorontalo', 'Sulawesi Tengah', 'Sulawesi Barat', 'Sulawesi Selatan', 'Sulawesi Tenggara',
+            'Maluku', 'Maluku Utara', 'Papua Barat', 'Papua', 'Papua Tengah', 'Papua Pegunungan', 'Papua Selatan', 'Papua Barat Daya'
+        ];
     }
 
     public function getBpsApi()
@@ -54,6 +69,62 @@ class LandingController extends Controller
                 ['nilai' => '189.00', 'nama_data' => 'Angka Kematian Ibu (AKI)', 'tahun' => '2024'],
                 ['nilai' => '16.85', 'nama_data' => 'Angka Kematian Bayi (AKB)', 'tahun' => '2024'],
             ]
+        ]);
+    }
+
+    public function getPenyakitWilayahApi()
+    {
+        $provinces = $this->getProvinces();
+        $data = [];
+        
+        // Define base diseases templates
+        $templates = [
+            ['penyakit' => 'Demam Berdarah (DBD)', 'icon' => 'fas fa-mosquito', 'base' => 300],
+            ['penyakit' => 'Diare', 'icon' => 'fas fa-toilet-paper', 'base' => 600],
+            ['penyakit' => 'ISPA', 'icon' => 'fas fa-head-side-cough', 'base' => 1200],
+            ['penyakit' => 'Tifus (Demam Tifoid)', 'icon' => 'fas fa-thermometer-half', 'base' => 200],
+            ['penyakit' => 'Influenza', 'icon' => 'fas fa-virus', 'base' => 1500]
+        ];
+
+        foreach ($provinces as $prov) {
+            // Generate deterministic values based on province name hash
+            $hash = abs(crc32($prov));
+            
+            // Determine population multiplier (Java provinces and DKI have higher values)
+            $multiplier = 1.0;
+            if (in_array($prov, ['Jawa Barat', 'Jawa Timur', 'Jawa Tengah'])) {
+                $multiplier = 4.5;
+            } elseif (in_array($prov, ['DKI Jakarta', 'Sumatera Utara', 'Sulawesi Selatan', 'Banten'])) {
+                $multiplier = 2.8;
+            } elseif (in_array($prov, ['Sumatera Barat', 'Riau', 'Kalimantan Timur', 'Bali', 'DI Yogyakarta'])) {
+                $multiplier = 1.8;
+            }
+
+            $provData = [];
+            foreach ($templates as $index => $tpl) {
+                // Calculate case count deterministically
+                $factor = (($hash + ($index * 13)) % 50) / 100 + 0.75; // range: 0.75 to 1.25
+                $kasus = round($tpl['base'] * $multiplier * $factor);
+                
+                // Determine trend deterministically
+                $trendVal = ($hash + ($index * 17)) % 3;
+                $tren = 'tetap';
+                if ($trendVal === 0) $tren = 'naik';
+                elseif ($trendVal === 1) $tren = 'turun';
+
+                $provData[] = [
+                    'penyakit' => $tpl['penyakit'],
+                    'kasus' => (int)$kasus,
+                    'tren' => $tren,
+                    'icon' => $tpl['icon']
+                ];
+            }
+            $data[$prov] = $provData;
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data
         ]);
     }
 }

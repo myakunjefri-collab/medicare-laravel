@@ -14,6 +14,10 @@ class Konsultasi extends Model
         'pasien_name',
         'dokter_id',
         'dokter_name',
+        'status',
+        'rating',
+        'ulasan',
+        'is_rated',
     ];
 
     public function pasien()

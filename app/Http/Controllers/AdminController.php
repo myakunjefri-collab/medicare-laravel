@@ -62,6 +62,39 @@ class AdminController extends Controller
         return redirect('/admin/dokter')->with('success', 'Dokter berhasil ditambahkan!');
     }
 
+    public function updateDokter(Request $request, $id)
+    {
+        $dokter = User::where('id', $id)->where('role', 'dokter')->firstOrFail();
+
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'spesialis' => 'required|string|max:100',
+            'no_hp' => 'nullable|string|max:20',
+            'username' => 'required|string|max:50|unique:users,username,' . $id,
+            'password' => 'nullable|string|min:6',
+        ], [
+            'username.unique' => 'Username sudah digunakan!',
+            'password.min' => 'Password minimal 6 karakter!',
+        ]);
+
+        $updateData = [
+            'name' => $request->name,
+            'spesialis' => $request->spesialis,
+            'no_hp' => $request->no_hp,
+            'phone' => $request->no_hp,
+            'username' => $request->username,
+            'email' => $request->username . '@med.com',
+        ];
+
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->password);
+        }
+
+        $dokter->update($updateData);
+
+        return redirect('/admin/dokter')->with('success', 'Data Dokter berhasil diperbarui!');
+    }
+
     public function hapusDokter($id)
     {
         $dokter = User::where('id', $id)->where('role', 'dokter')->firstOrFail();
@@ -83,6 +116,7 @@ class AdminController extends Controller
     {
         $user = Auth::user();
         $jadwal_list = JadwalDokter::orderBy('tanggal', 'desc')->get();
+        $dokter_list = User::where('role', 'dokter')->orderBy('name')->get();
 
         // Prepare events for FullCalendar
         $events = [];
@@ -102,7 +136,7 @@ class AdminController extends Controller
             ];
         }
 
-        return view('admin.dashboard', compact('user', 'jadwal_list', 'events'))
+        return view('admin.dashboard', compact('user', 'jadwal_list', 'dokter_list', 'events'))
             ->with('page', 'jadwal');
     }
 
@@ -160,20 +194,58 @@ class AdminController extends Controller
         $request->validate([
             'judul' => 'required|string|max:255',
             'konten' => 'required|string',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
+        $gambarPath = null;
+        if ($request->hasFile('gambar')) {
+            $gambarPath = $request->file('gambar')->store('berita', 'public');
+        }
 
         Berita::create([
             'judul' => $request->judul,
             'konten' => $request->konten,
             'tanggal' => date('Y-m-d'),
+            'gambar' => $gambarPath,
         ]);
 
         return redirect('/admin/berita')->with('success', 'Berita berhasil diterbitkan!');
     }
 
+    public function editBerita(Request $request, $id)
+    {
+        $request->validate([
+            'judul' => 'required|string|max:255',
+            'konten' => 'required|string',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $berita = Berita::findOrFail($id);
+
+        $updateData = [
+            'judul' => $request->judul,
+            'konten' => $request->konten,
+        ];
+
+        if ($request->hasFile('gambar')) {
+            // Delete old image if it exists
+            if ($berita->gambar && \Illuminate\Support\Facades\Storage::disk('public')->exists($berita->gambar)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($berita->gambar);
+            }
+            $updateData['gambar'] = $request->file('gambar')->store('berita', 'public');
+        }
+
+        $berita->update($updateData);
+
+        return redirect('/admin/berita')->with('success', 'Berita berhasil diperbarui!');
+    }
+
     public function hapusBerita($id)
     {
         $berita = Berita::findOrFail($id);
+        if ($berita->gambar && \Illuminate\Support\Facades\Storage::disk('public')->exists($berita->gambar)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($berita->gambar);
+        }
         $berita->delete();
 
         return redirect('/admin/berita')->with('success', 'Berita berhasil dihapus!');
@@ -271,5 +343,94 @@ class AdminController extends Controller
         $pasien->delete();
 
         return redirect('/admin/pasien')->with('success', 'Akun Pasien berhasil dihapus!');
+    }
+
+    public function tambahJadwal(Request $request)
+    {
+        $request->validate([
+            'doctor_id' => 'required|exists:users,id',
+            'tanggal' => 'required|date',
+            'start_time' => 'required|string',
+            'end_time' => 'required|string',
+            'ruangan' => 'nullable|string|max:100',
+            'kuota' => 'required|integer|min:1',
+        ]);
+
+        $doctor = User::findOrFail($request->doctor_id);
+
+        JadwalDokter::create([
+            'doctor_id' => $doctor->id,
+            'doctor_name' => $doctor->name,
+            'spesialis' => $doctor->spesialis ?? 'Umum',
+            'tanggal' => $request->tanggal,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'kuota' => $request->kuota,
+            'ruangan' => $request->ruangan,
+        ]);
+
+        return redirect('/admin/jadwal')->with('success', 'Jadwal dokter berhasil ditambahkan oleh Admin!');
+    }
+
+    public function updateJadwal(Request $request, $id)
+    {
+        $request->validate([
+            'doctor_id' => 'required|exists:users,id',
+            'tanggal' => 'required|date',
+            'start_time' => 'required|string',
+            'end_time' => 'required|string',
+            'ruangan' => 'nullable|string|max:100',
+            'kuota' => 'required|integer|min:1',
+        ]);
+
+        $doctor = User::findOrFail($request->doctor_id);
+        $jadwal = JadwalDokter::findOrFail($id);
+
+        $jadwal->update([
+            'doctor_id' => $doctor->id,
+            'doctor_name' => $doctor->name,
+            'spesialis' => $doctor->spesialis ?? 'Umum',
+            'tanggal' => $request->tanggal,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'kuota' => $request->kuota,
+            'ruangan' => $request->ruangan,
+        ]);
+
+        return redirect('/admin/jadwal')->with('success', 'Jadwal dokter berhasil diperbarui oleh Admin!');
+    }
+
+    public function bantuan()
+    {
+        $user = Auth::user();
+        $bantuan_list = \App\Models\CustomerService::orderBy('created_at', 'desc')->get();
+
+        return view('admin.dashboard', compact('user', 'bantuan_list'))
+            ->with('page', 'bantuan');
+    }
+
+    public function balasBantuan(Request $request, $id)
+    {
+        $request->validate([
+            'balasan' => 'required|string',
+        ]);
+
+        $bantuan = \App\Models\CustomerService::findOrFail($id);
+        $bantuan->update([
+            'balasan' => $request->balasan,
+            'status' => 'selesai',
+        ]);
+
+        return redirect('/admin/bantuan')->with('success', 'Tanggapan Customer Service berhasil dikirim!');
+    }
+
+    public function selesaiBantuan($id)
+    {
+        $bantuan = \App\Models\CustomerService::findOrFail($id);
+        $bantuan->update([
+            'status' => 'selesai',
+        ]);
+
+        return redirect('/admin/bantuan')->with('success', 'Tiket bantuan ditandai selesai!');
     }
 }

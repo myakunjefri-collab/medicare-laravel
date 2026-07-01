@@ -412,6 +412,45 @@
             font-size: 0.85rem;
         }
         
+        /* Modal Style for Landing Page */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(8, 18, 37, 0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-content {
+            background: #ffffff;
+            border-radius: 30px;
+            padding: 40px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid #e2e8f0;
+            animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleUp {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .berita-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(43, 158, 110, 0.35) !important;
+            box-shadow: 0 20px 40px rgba(11, 43, 77, 0.04) !important;
+        }
+        .berita-card:hover img {
+            transform: scale(1.05);
+        }
+
         /* Mobile Menu Toggle */
         .menu-toggle {
             display: none;
@@ -490,6 +529,7 @@
             <a href="#features" onclick="closeMenu()">Fitur</a>
             <a href="#doctors" onclick="closeMenu()">Dokter</a>
             <a href="#bps-data" onclick="closeMenu()">Statistik</a>
+            <a href="#berita" onclick="closeMenu()">Berita</a>
             <a href="/login" class="btn-login"><i class="fas fa-sign-in-alt"></i> Masuk / Daftar</a>
         </div>
     </div>
@@ -595,6 +635,65 @@
         </div>
     </div>
 
+    <!-- Sebaran Penyakit Wilayah Section -->
+    <div class="bps-section" id="penyakit-wilayah" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-top: 1px solid rgba(226, 232, 240, 0.8);">
+        <h2 class="bps-title"><i class="fas fa-virus-slash"></i> Sebaran Kasus Penyakit Daerah</h2>
+        <p class="bps-subtitle">Pilih wilayah untuk memantau data penyakit dan tren kesehatan ter-update.</p>
+        
+        <div style="margin-bottom: 30px; display: inline-block;">
+            <label for="selectWilayah" style="font-weight: 700; color: #0b2b4d; margin-right: 12px; font-size: 1.1rem;"><i class="fas fa-map-marker-alt" style="color: #2b9e6e;"></i> Pilih Provinsi:</label>
+            <select id="selectWilayah" onchange="loadPenyakitWilayah(this.value)" style="padding: 12px 24px; font-size: 1rem; font-weight: 600; border-radius: 30px; border: 2px solid #2b9e6e; background: white; color: #0b2b4d; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: all 0.3s; outline: none;">
+                @foreach($provinces as $prov)
+                    <option value="{{ $prov }}" {{ $prov === 'Jawa Timur' ? 'selected' : '' }}>{{ $prov }}</option>
+                @endforeach
+            </select>
+        </div>
+        
+        <div class="bps-grid" id="penyakitGrid">
+            <!-- Will be populated dynamically via javascript -->
+        </div>
+    </div>
+
+    <!-- Berita & Informasi Kesehatan -->
+    <div class="features" id="berita" style="background: white;">
+        <h2 class="section-title"><i class="fas fa-newspaper"></i> Berita & Informasi Kesehatan</h2>
+        <p class="features-subtitle" style="color: #64748b; margin-bottom: 50px;">Dapatkan tips kesehatan terpercaya dan info terbaru dari MedicareSystem.</p>
+        
+        <div class="features-grid">
+            @forelse($berita as $article)
+                <div class="feature-card berita-card" style="display: flex; flex-direction: column; justify-content: space-between; border-radius: 24px; padding: 0; overflow: hidden; background: white; border: 1px solid #e2e8f0; transition: all 0.3s;">
+                    @if($article->gambar)
+                        <div style="width: 100%; height: 180px; overflow: hidden;">
+                            <img src="{{ asset('storage/' . $article->gambar) }}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;">
+                        </div>
+                    @else
+                        <div style="width: 100%; height: 180px; background: rgba(43, 158, 110, 0.04); display: flex; align-items: center; justify-content: center; color: #2b9e6e;">
+                            <i class="fas fa-newspaper" style="font-size: 3rem;"></i>
+                        </div>
+                    @endif
+                    
+                    <div style="padding: 24px; text-align: left; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #94a3b8; font-weight: 600; margin-bottom: 10px;">
+                                <i class="far fa-calendar-alt" style="color: #2b9e6e;"></i>
+                                <span>{{ $article->created_at->format('d M Y') }}</span>
+                            </div>
+                            <h3 style="font-size: 1.15rem; color: #0b2b4d; font-weight: 700; line-height: 1.4; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ $article->judul }}</h3>
+                            <p style="font-size: 0.85rem; color: #64748b; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 20px;">{{ Str::limit($article->konten, 150) }}</p>
+                        </div>
+                        
+                        <a href="javascript:void(0)" onclick="bukaModalBerita('{{ addslashes($article->judul) }}', '{{ $article->created_at->format('d M Y') }}', '{{ addslashes($article->konten) }}', '{{ $article->gambar ? asset('storage/' . $article->gambar) : '' }}')" style="color: #2b9e6e; font-weight: 700; text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; transition: gap 0.2s;">Baca Selengkapnya <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            @empty
+                <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #64748b;">
+                    <i class="fas fa-folder-open" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 12px;"></i>
+                    <p>Belum ada berita yang diterbitkan saat ini.</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+
     <!-- CTA -->
     <div class="cta">
         <h2>Ingin Konsultasi Praktis Tanpa Antre?</h2>
@@ -609,6 +708,26 @@
         <p>&copy; 2026 MedicareSystem. Hak Cipta Dilindungi.</p>
     </footer>
 
+    <!-- Berita Modal -->
+    <div id="modalBerita" class="modal" style="display: none;">
+        <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; width: 90%; max-width: 600px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #2b9e6e; font-weight: 600; margin-bottom: 8px;">
+                <i class="far fa-calendar-alt"></i>
+                <span id="modalBeritaTanggal"></span>
+            </div>
+            <h3 id="modalBeritaJudul" style="font-size: 1.5rem; color: #0b2b4d; font-weight: 800; margin-bottom: 16px; line-height: 1.3;"></h3>
+            
+            <div id="modalBeritaGambarDiv" style="width: 100%; height: 220px; overflow: hidden; border-radius: 16px; margin-bottom: 16px; display: none;">
+                <img id="modalBeritaGambar" src="" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+
+            <div id="modalBeritaKonten" style="font-size: 0.95rem; color: #475569; line-height: 1.7; overflow-y: auto; padding-right: 8px; margin-bottom: 24px; white-space: pre-line; text-align: left; flex: 1;"></div>
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="button" onclick="tutupModalBerita()" class="btn-primary" style="border: none; cursor: pointer; padding: 10px 24px; border-radius: 30px; font-weight: 700; background: linear-gradient(135deg, #2b9e6e, #228058); color: white;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleMenu() {
             document.getElementById('navLinks').classList.toggle('active');
@@ -616,6 +735,80 @@
         function closeMenu() {
             document.getElementById('navLinks').classList.remove('active');
         }
+        function bukaModalBerita(judul, tanggal, konten, gambarUrl) {
+            document.getElementById('modalBeritaJudul').innerHTML = judul;
+            document.getElementById('modalBeritaTanggal').innerHTML = tanggal;
+            document.getElementById('modalBeritaKonten').innerHTML = konten;
+            
+            const gDiv = document.getElementById('modalBeritaGambarDiv');
+            const gImg = document.getElementById('modalBeritaGambar');
+            if (gambarUrl) {
+                gImg.src = gambarUrl;
+                gDiv.style.display = 'block';
+            } else {
+                gImg.src = '';
+                gDiv.style.display = 'none';
+            }
+            document.getElementById('modalBerita').style.display = 'flex';
+        }
+        function tutupModalBerita() {
+            document.getElementById('modalBerita').style.display = 'none';
+        }
+
+        function loadPenyakitWilayah(provinsi) {
+            const grid = document.getElementById('penyakitGrid');
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #64748b;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #2b9e6e; margin-bottom: 10px;"></i><p>Memuat data sebaran...</p></div>';
+            
+            fetch('/api/penyakit-wilayah')
+                .then(response => response.json())
+                .then(res => {
+                    if (res.status === 'success' && res.data[provinsi]) {
+                        const items = res.data[provinsi];
+                        let html = '';
+                        items.forEach(item => {
+                            let trendBadge = '';
+                            if (item.tren === 'naik') {
+                                trendBadge = '<span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; font-size:0.75rem; background:#fee2e2; color:#b91c1c; border-radius:9999px; font-weight:700; border:1px solid #fca5a5;"><i class="fas fa-arrow-trend-up"></i> Naik</span>';
+                            } else if (item.tren === 'turun') {
+                                trendBadge = '<span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; font-size:0.75rem; background:#dcfce7; color:#15803d; border-radius:9999px; font-weight:700; border:1px solid #86efac;"><i class="fas fa-arrow-trend-down"></i> Turun</span>';
+                            } else {
+                                trendBadge = '<span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; font-size:0.75rem; background:#f1f5f9; color:#475569; border-radius:9999px; font-weight:700; border:1px solid #cbd5e1;"><i class="fas fa-equals"></i> Tetap</span>';
+                            }
+                            
+                            html += `
+                                <div class="bps-card" style="text-align: left; display: flex; flex-direction: column; justify-content: space-between; border-radius: 24px; padding: 28px 24px; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; transition: all 0.3s; position: relative;">
+                                    <div>
+                                        <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                                            <div style="background: rgba(43, 158, 110, 0.08); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #2b9e6e; font-size: 1.5rem;">
+                                                <i class="${item.icon}"></i>
+                                            </div>
+                                            <div>${trendBadge}</div>
+                                        </div>
+                                        <div class="nilai" style="font-size: 1.9rem; font-weight: 800; color: #0b2b4d; margin: 20px 0 6px 0; letter-spacing: -0.5px;">${item.kasus.toLocaleString('id-ID')}</div>
+                                        <h3 style="font-size: 1.1rem; color: #0b2b4d; font-weight: 700; line-height: 1.3; margin-bottom: 6px;">${item.penyakit}</h3>
+                                        <p style="font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.5;">Jumlah kasus terlaporkan di wilayah ini.</p>
+                                    </div>
+                                    <small style="margin-top: 20px; font-size: 0.75rem; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 12px; display: block; font-weight: 500;">Tahun 2026 | Sumber Kemenkes & BPS</small>
+                                </div>
+                            `;
+                        });
+                        grid.innerHTML = html;
+                    } else {
+                        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;"><p>Gagal memuat data sebaran penyakit.</p></div>';
+                    }
+                })
+                .catch(err => {
+                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;"><p>Terjadi kesalahan koneksi.</p></div>';
+                });
+        }
+        
+        // Load initial value on DOM loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectVal = document.getElementById('selectWilayah');
+            if (selectVal) {
+                loadPenyakitWilayah(selectVal.value);
+            }
+        });
     </script>
 </body>
 </html>

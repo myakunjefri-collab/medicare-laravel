@@ -41,6 +41,13 @@
                     <p>Sesi Konsultasi</p>
                 </div>
             </div>
+            <div class="stat-card">
+                <div class="icon-wrapper"><i class="fas fa-star" style="color: #f59e0b;"></i></div>
+                <div>
+                    <h3>{{ number_format($user->average_rating, 1) }}</h3>
+                    <p>Rating Dokter ({{ $user->review_count }} Ulasan)</p>
+                </div>
+            </div>
         </div>
 
         <div class="card">
@@ -48,6 +55,67 @@
             <p style="color: var(--text-muted); line-height: 1.6;">
                 Selamat datang di sistem manajemen klinik MedicareSystem. Gunakan menu navigasi di samping untuk mengelola jadwal praktik, membalas konsultasi pesan pasien, memberi diagnosa rekam medis, dan memantau antrean janji temu.
             </p>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-toggle-on"></i> Status Konsultasi Saya</h2>
+            <p style="color: var(--text-muted); margin-bottom: 15px;">
+                Tentukan status ketersediaan Anda agar pasien mengetahui apakah Anda sedang aktif atau tidak dapat menerima konsultasi.
+            </p>
+            <form action="/dokter/status/update" method="POST" class="status-dokter-form" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                @csrf
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; margin: 0;">
+                        <input type="radio" name="status_dokter" value="online" {{ $user->status_dokter === 'online' ? 'checked' : '' }} onchange="this.form.submit()" style="width: auto; margin: 0; cursor: pointer;">
+                        <span class="status-badge status-selesai" style="text-transform: none; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <span style="display: inline-block; width: 8px; height: 8px; background: #22c55e; border-radius: 50%;"></span>
+                            Online & Siap Konsultasi
+                        </span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; margin: 0;">
+                        <input type="radio" name="status_dokter" value="sibuk" {{ $user->status_dokter === 'sibuk' ? 'checked' : '' }} onchange="this.form.submit()" style="width: auto; margin: 0; cursor: pointer;">
+                        <span class="status-badge status-menunggu" style="text-transform: none; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <span style="display: inline-block; width: 8px; height: 8px; background: #eab308; border-radius: 50%;"></span>
+                            Sedang Sibuk / Gabisa Konsul
+                        </span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; margin: 0;">
+                        <input type="radio" name="status_dokter" value="offline" {{ $user->status_dokter === 'offline' ? 'checked' : '' }} onchange="this.form.submit()" style="width: auto; margin: 0; cursor: pointer;">
+                        <span class="status-badge status-batal" style="text-transform: none; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <span style="display: inline-block; width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
+                            Offline / Tidak Aktif
+                        </span>
+                    </label>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-star" style="color: #f59e0b;"></i> Ulasan & Feedback Pasien</h2>
+            @if($user->rating_reviews->isEmpty())
+                <p style="color: var(--text-muted);">Belum ada ulasan dari pasien.</p>
+            @else
+                <div class="reviews-container">
+                    @foreach($user->rating_reviews as $rev)
+                        <div class="review-item">
+                            <div class="review-header">
+                                <span class="review-author"><i class="fas fa-user-circle"></i> {{ $rev->pasien_name }}</span>
+                                <span class="star-display">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <i class="fa{{ $i <= $rev->rating ? 's' : 'r' }} fa-star"></i>
+                                    @endfor
+                                </span>
+                            </div>
+                            <div class="review-content">
+                                "{{ $rev->ulasan }}"
+                            </div>
+                            <div class="review-date" style="text-align: right; margin-top: 6px;">
+                                <small><i class="fas fa-clock"></i> {{ date('d/m/Y H:i', strtotime($rev->updated_at)) }}</small>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
     @endif
 
@@ -185,10 +253,22 @@
                     @endforelse
                 </div>
             @else
-                <div style="margin-bottom: 15px;">
+                <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <a href="/dokter/chat" class="btn btn-sm btn-warning"><i class="fas fa-arrow-left"></i> Kembali ke List Chat</a>
+                    @if($selected_chat->status === 'aktif')
+                        <form action="/dokter/chat/{{ $selected_chat->id }}/akhiri" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mengakhiri sesi konsultasi ini? Setelah diakhiri, pasien dapat memberikan rating dan ulasan.')">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-times-circle"></i> Akhiri Konsultasi</button>
+                        </form>
+                    @endif
                 </div>
-                <h3><i class="fas fa-comments"></i> Sesi Konsultasi: {{ $selected_chat->pasien_name }}</h3>
+                <h3><i class="fas fa-comments"></i> Sesi Konsultasi: {{ $selected_chat->pasien_name }}
+                    @if($selected_chat->status === 'selesai')
+                        <span class="status-badge status-selesai" style="font-size: 0.7rem; vertical-align: middle; margin-left: 8px;">Selesai</span>
+                    @else
+                        <span class="status-badge status-konfirmasi" style="font-size: 0.7rem; vertical-align: middle; margin-left: 8px;">Aktif</span>
+                    @endif
+                </h3>
                 
                 <div class="chat-container" style="margin-top: 15px;">
                     <div class="chat-messages" id="chatMessages">
@@ -209,15 +289,22 @@
                             <p style="text-align: center; color: var(--text-muted); padding: 40px 0;">Belum ada riwayat pesan chat.</p>
                         @endforelse
                     </div>
-                    <form action="/dokter/chat/reply" method="POST" class="chat-input" enctype="multipart/form-data">
-                        @csrf
-                        <input type="hidden" name="konsultasi_id" value="{{ $selected_chat->id }}">
-                        <label for="gambar" class="btn btn-sm" style="background:#64748b; display:flex; align-items:center; justify-content:center; width:45px; height:45px; border-radius:50%; margin:0; box-shadow:none; cursor:pointer;"><i class="fas fa-paperclip"></i></label>
-                        <input type="file" name="gambar" id="gambar" accept="image/*" style="display:none;" onchange="document.getElementById('fileName').innerHTML = this.files[0] ? this.files[0].name : '';">
-                        <input type="text" name="pesan_balasan" placeholder="Ketik balasan konsultasi di sini..." autocomplete="off">
-                        <button type="submit" class="btn"><i class="fas fa-paper-plane"></i> Kirim</button>
-                    </form>
-                    <div id="fileName" style="font-size: 0.75rem; color: var(--text-muted); padding: 5px 20px; font-weight: 600;"></div>
+
+                    @if($selected_chat->status === 'selesai')
+                        <div class="end-consultation-banner" style="margin: 20px; border-radius: var(--border-radius-md);">
+                            <i class="fas fa-info-circle"></i> Sesi konsultasi telah berakhir.
+                        </div>
+                    @else
+                        <form action="/dokter/chat/reply" method="POST" class="chat-input" enctype="multipart/form-data">
+                            @csrf
+                            <input type="hidden" name="konsultasi_id" value="{{ $selected_chat->id }}">
+                            <label for="gambar" class="btn btn-sm" style="background:#64748b; display:flex; align-items:center; justify-content:center; width:45px; height:45px; border-radius:50%; margin:0; box-shadow:none; cursor:pointer;"><i class="fas fa-paperclip"></i></label>
+                            <input type="file" name="gambar" id="gambar" accept="image/*" style="display:none;" onchange="document.getElementById('fileName').innerHTML = this.files[0] ? this.files[0].name : '';">
+                            <input type="text" name="pesan_balasan" placeholder="Ketik balasan konsultasi di sini..." autocomplete="off">
+                            <button type="submit" class="btn"><i class="fas fa-paper-plane"></i> Kirim</button>
+                        </form>
+                        <div id="fileName" style="font-size: 0.75rem; color: var(--text-muted); padding: 5px 20px; font-weight: 600;"></div>
+                    @endif
                 </div>
             @endif
         </div>
@@ -244,7 +331,15 @@
                                 <td>{{ date('d/m/Y', strtotime($row->tanggal)) }}</td>
                                 <td><strong>{{ $row->pasien_name }}</strong></td>
                                 <td>{{ $row->usia ?: '-' }} Tahun</td>
-                                <td>{{ $row->keluhan }}</td>
+                                <td>
+                                    <strong>Keluhan:</strong> {{ $row->keluhan }}<br>
+                                    <div style="margin-top: 6px; font-size: 0.8rem; background: #f1f5f9; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0; display: inline-block;">
+                                        🩺 Tensi: {{ $row->tensi_darah ?: '-' }} | 🌡️ Suhu: {{ $row->suhu_tubuh ? $row->suhu_tubuh . ' °C' : '-' }} | 💓 Nadi: {{ $row->detak_jantung ? $row->detak_jantung . ' bpm' : '-' }} | ⚖️ BB: {{ $row->berat_badan ? $row->berat_badan . ' kg' : '-' }}
+                                    </div>
+                                    <div style="margin-top: 6px; font-size: 0.8rem; color: #228058; font-weight: 600;">
+                                        💡 Kesimpulan Awal: <span>{{ $row->kesimpulan_awal ?: 'Tidak ada parameter klinis.' }}</span>
+                                    </div>
+                                </td>
                                 <td>
                                     <button class="btn btn-sm" onclick="bukaModalDiagnosa({{ $row->id }}, '{{ $row->pasien_name }}')">
                                         <i class="fas fa-edit"></i> Diagnosa
@@ -327,9 +422,12 @@
                         @forelse($antrean as $a)
                             <tr>
                                 <td><strong>{{ $a->pasien_name }}</strong></td>
-                                <td>{{ date('d/m/Y', strtotime($a->tanggal)) }}</td>
+                                <td>
+                                    <strong>Poliklinik:</strong> <span style="color: var(--accent); font-weight:700;">{{ $a->poli ?: 'Poli Umum' }}</span><br>
+                                    <strong>Jadwal:</strong> {{ date('d/m/Y', strtotime($a->tanggal)) }}
+                                </td>
                                 <td>{{ $a->jam }} WIB</td>
-                                <td><span class="queue-no" style="font-size: 1.1rem;">{{ $a->nomor_antrean }}</span></td>
+                                <td><span class="queue-no" style="font-size: 1.2rem; font-weight: 800; color: #2b9e6e; background: rgba(43, 158, 110, 0.1); padding: 4px 10px; border-radius: 6px;">{{ $a->nomor_antrean }}</span></td>
                                 <td>
                                     <span class="status-badge {{ $a->status === 'menunggu' ? 'status-menunggu' : ($a->status === 'konfirmasi' ? 'status-konfirmasi' : ($a->status === 'selesai' ? 'status-selesai' : 'status-batal')) }}">
                                         {{ $a->status }}

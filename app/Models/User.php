@@ -31,6 +31,7 @@ class User extends Authenticatable
         'spesialis',
         'no_hp',
         'is_active',
+        'status_dokter',
     ];
 
     /**
@@ -44,6 +45,16 @@ class User extends Authenticatable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'average_rating',
+        'review_count',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -54,5 +65,38 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        if ($this->role !== 'dokter') {
+            return 0;
+        }
+        return \App\Models\Konsultasi::where('dokter_id', $this->id)
+            ->where('is_rated', true)
+            ->avg('rating') ?: 0;
+    }
+
+    public function getReviewCountAttribute()
+    {
+        if ($this->role !== 'dokter') {
+            return 0;
+        }
+        return \App\Models\Konsultasi::where('dokter_id', $this->id)
+            ->where('is_rated', true)
+            ->count();
+    }
+
+    public function getRatingReviewsAttribute()
+    {
+        if ($this->role !== 'dokter') {
+            return collect();
+        }
+        return \App\Models\Konsultasi::where('dokter_id', $this->id)
+            ->where('is_rated', true)
+            ->whereNotNull('ulasan')
+            ->where('ulasan', '!=', '')
+            ->orderBy('updated_at', 'desc')
+            ->get();
     }
 }

@@ -5,20 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class JanjiTemu extends Model
+class CustomerService extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'pasien_id',
         'pasien_name',
-        'dokter_name',
-        'poli',
-        'tanggal',
-        'jam',
+        'pesan',
+        'balasan',
         'status',
-        'nomor_antrean',
-        'keluhan',
     ];
 
     public function pasien()

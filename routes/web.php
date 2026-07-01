@@ -12,6 +12,7 @@ use App\Http\Controllers\AdminController;
 Route::get('/', [LandingController::class, 'index']);
 Route::get('/api/bps', [LandingController::class, 'getBpsApi']);
 Route::get('/api_bps.php', [LandingController::class, 'getBpsApi']); // fallback routing for compatibility
+Route::get('/api/penyakit-wilayah', [LandingController::class, 'getPenyakitWilayahApi']);
 
 // Authentication
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -25,6 +26,8 @@ Route::middleware(['auth', 'role:pasien'])->group(function () {
     Route::get('/pasien/jadwal', [PasienController::class, 'jadwal']);
     Route::get('/pasien/chat', [PasienController::class, 'chat']);
     Route::get('/pasien/chat/{dokter_id}', [PasienController::class, 'chat']);
+    Route::get('/pasien/chatbot', [PasienController::class, 'chatbot']);
+    Route::post('/pasien/chatbot/query', [PasienController::class, 'chatbotQuery']);
     Route::post('/pasien/chat/send', [PasienController::class, 'kirimChat']);
     Route::get('/pasien/rekam-medis', [PasienController::class, 'rekamMedis']);
     Route::post('/pasien/rekam-medis', [PasienController::class, 'simpanRekamMedis']);
@@ -35,11 +38,16 @@ Route::middleware(['auth', 'role:pasien'])->group(function () {
     Route::get('/pasien/pesanan-obat', [PasienController::class, 'daftarPesananObat']);
     Route::post('/pasien/pesanan-obat/{id}/upload-bukti', [PasienController::class, 'uploadBuktiTransfer']);
     Route::get('/pasien/pesanan-obat/{id}/cetak-struk', [PasienController::class, 'cetakStruk']);
+    Route::post('/pasien/chat/{id}/rate', [PasienController::class, 'simpanRating']);
+    Route::delete('/pasien/chat/session/{id}', [PasienController::class, 'deleteChatSession']);
+    Route::get('/pasien/bantuan', [PasienController::class, 'bantuan']);
+    Route::post('/pasien/bantuan/kirim', [PasienController::class, 'kirimBantuan']);
 });
 
 // Dokter Routes
 Route::middleware(['auth', 'role:dokter'])->group(function () {
     Route::get('/dokter', [DokterController::class, 'index']);
+    Route::post('/dokter/status/update', [DokterController::class, 'updateStatus']);
     Route::get('/dokter/jadwal', [DokterController::class, 'jadwal']);
     Route::get('/dokter/kelola-jadwal', [DokterController::class, 'kelolaJadwal']);
     Route::post('/dokter/kelola-jadwal/tambah', [DokterController::class, 'tambahJadwal']);
@@ -47,6 +55,7 @@ Route::middleware(['auth', 'role:dokter'])->group(function () {
     Route::get('/dokter/chat', [DokterController::class, 'chat']);
     Route::get('/dokter/chat/{chat_id}', [DokterController::class, 'chat']);
     Route::post('/dokter/chat/reply', [DokterController::class, 'balasChat']);
+    Route::post('/dokter/chat/{id}/akhiri', [DokterController::class, 'akhiriKonsultasi']);
     Route::get('/dokter/diagnosa', [DokterController::class, 'diagnosa']);
     Route::post('/dokter/diagnosa/simpan', [DokterController::class, 'simpanDiagnosa']);
     Route::get('/dokter/antrean', [DokterController::class, 'antrean']);
@@ -58,6 +67,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index']);
     Route::get('/admin/dokter', [AdminController::class, 'dokter']);
     Route::post('/admin/dokter/tambah', [AdminController::class, 'tambahDokter']);
+    Route::post('/admin/dokter/{id}/update', [AdminController::class, 'updateDokter']);
     Route::get('/admin/dokter/{id}/hapus', [AdminController::class, 'hapusDokter']);
     Route::get('/admin/pasien', [AdminController::class, 'pasien']);
     Route::post('/admin/pasien/tambah', [AdminController::class, 'tambahPasien']);
@@ -70,7 +80,13 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/rekam-medis', [AdminController::class, 'rekam']);
     Route::get('/admin/berita', [AdminController::class, 'berita']);
     Route::post('/admin/berita/tambah', [AdminController::class, 'tambahBerita']);
+    Route::post('/admin/berita/{id}/edit', [AdminController::class, 'editBerita']);
     Route::get('/admin/berita/{id}/hapus', [AdminController::class, 'hapusBerita']);
     Route::get('/admin/pesanan-obat', [AdminController::class, 'pesananObat']);
     Route::get('/admin/pesanan-obat/{id}/update-status', [AdminController::class, 'updateStatusPesanan']);
+    Route::post('/admin/jadwal/tambah', [AdminController::class, 'tambahJadwal']);
+    Route::post('/admin/jadwal/{id}/update', [AdminController::class, 'updateJadwal']);
+    Route::get('/admin/bantuan', [AdminController::class, 'bantuan']);
+    Route::post('/admin/bantuan/{id}/balas', [AdminController::class, 'balasBantuan']);
+    Route::get('/admin/bantuan/{id}/selesai', [AdminController::class, 'selesaiBantuan']);
 });

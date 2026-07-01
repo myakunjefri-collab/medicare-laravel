@@ -30,6 +30,20 @@ class DokterController extends Controller
             ->with('page', 'home');
     }
 
+    public function updateStatus(Request $request)
+    {
+        $request->validate([
+            'status_dokter' => 'required|in:online,sibuk,offline',
+        ]);
+
+        $user = Auth::user();
+        User::where('id', $user->id)->update([
+            'status_dokter' => $request->status_dokter,
+        ]);
+
+        return redirect('/dokter')->with('success', 'Status konsultasi Anda berhasil diperbarui!');
+    }
+
     public function jadwal()
     {
         $user = Auth::user();
@@ -151,6 +165,18 @@ class DokterController extends Controller
         return redirect('/dokter/chat/' . $chat->id)->with('success', 'Balasan terkirim!');
     }
 
+    public function akhiriKonsultasi($id)
+    {
+        $user = Auth::user();
+        $chat = Konsultasi::where('id', $id)->where('dokter_id', $user->id)->firstOrFail();
+
+        $chat->update([
+            'status' => 'selesai'
+        ]);
+
+        return redirect('/dokter/chat/' . $chat->id)->with('success', 'Sesi konsultasi telah diakhiri!');
+    }
+
     public function diagnosa()
     {
         $user = Auth::user();
@@ -181,14 +207,45 @@ class DokterController extends Controller
         ]);
 
         if ($request->status_diagnosa === 'parah') {
-            $no_antrean = 'ANT' . rand(1000, 9999);
+            // Determine Poliklinik & Prefix
+            $spec = strtolower($user->spesialis ?? '');
+            $poli = "Poli Umum";
+            $prefix = "U";
+            if (str_contains($spec, 'anak')) {
+                $poli = "Poli Anak";
+                $prefix = "A";
+            } elseif (str_contains($spec, 'jantung')) {
+                $poli = "Poli Jantung";
+                $prefix = "J";
+            } elseif (str_contains($spec, 'mata')) {
+                $poli = "Poli Mata";
+                $prefix = "M";
+            } elseif (str_contains($spec, 'saraf')) {
+                $poli = "Poli Saraf";
+                $prefix = "S";
+            } elseif (str_contains($spec, 'gigi')) {
+                $poli = "Poli Gigi";
+                $prefix = "G";
+            } elseif (str_contains($spec, 'kandungan')) {
+                $poli = "Poli Kandungan";
+                $prefix = "K";
+            }
+
             $tgl_janji = $request->tgl_janji ?? date('Y-m-d', strtotime('+2 days'));
             $jam_janji = $request->jam_janji ?? '10:00';
+
+            // Calculate sequential queue number for that polyclinic and date
+            $existing_count = JanjiTemu::where('poli', $poli)
+                ->where('tanggal', $tgl_janji)
+                ->count();
+            $seq = $existing_count + 1;
+            $no_antrean = $prefix . '-' . str_pad($seq, 2, '0', STR_PAD_LEFT);
 
             JanjiTemu::create([
                 'pasien_id' => $rm->pasien_id,
                 'pasien_name' => $rm->pasien_name,
                 'dokter_name' => $user->name,
+                'poli' => $poli,
                 'tanggal' => $tgl_janji,
                 'jam' => $jam_janji,
                 'status' => 'menunggu',

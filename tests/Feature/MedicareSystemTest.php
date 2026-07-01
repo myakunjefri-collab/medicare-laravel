@@ -7,6 +7,8 @@ use App\Models\RekamMedis;
 use App\Models\PesananObat;
 use App\Models\PesanChat;
 use App\Models\Konsultasi;
+use App\Models\JadwalDokter;
+use App\Models\CustomerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -235,5 +237,278 @@ class MedicareSystemTest extends TestCase
             'id' => $newPatient->id
         ]);
     }
+
+    public function test_chatbot_query_api_behavior()
+    {
+        $this->seed();
+        $patient = User::where('role', 'pasien')->first();
+
+        // 1. Unauthenticated request should fail/redirect
+        $response = $this->postJson('/pasien/chatbot/query', ['pesan' => 'Halo']);
+        $response->assertStatus(401);
+
+        // 2. Authenticated request without API key should return false success with warning
+        // Force config key to be empty for this check
+        config(['services.gemini.key' => null]);
+        $response = $this->actingAs($patient)->postJson('/pasien/chatbot/query', ['pesan' => 'Halo']);
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => false,
+            'message' => 'API Key Gemini belum dikonfigurasi di server.'
+        ]);
+
+        // 3. Authenticated request with mocked Gemini API call
+        config(['services.gemini.key' => 'TEST_API_KEY']);
+        \Illuminate\Support\Facades\Http::fake([
+            'generativelanguage.googleapis.com/*' => \Illuminate\Support\Facades\Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'message' => 'Anda mengalami stres, kami rekomendasikan dokter Psikolog.',
+                                        'recommended_doctor_ids' => [2]
+                                    ])
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ], 200)
+        ]);
+
+        $response = $this->actingAs($patient)->postJson('/pasien/chatbot/query', ['pesan' => 'Saya merasa sangat stres dan jenuh']);
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'message' => 'Anda mengalami stres, kami rekomendasikan dokter Psikolog.',
+            'recommended_doctor_ids' => [2]
+        ]);
+    }
+
+    public function test_new_features_implementation()
+    {
+        $this->seed();
+
+        $patient = User::where('email', 'pasien@med.com')->first();
+        $doctor = User::where('email', 'dokter1@med.com')->first();
+        $admin = User::where('email', 'admin@med.com')->first();
+
+        // 1. Verify regional disease stats endpoint
+        $response = $this->get('/api/penyakit-wilayah');
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'status',
+            'data' => [
+                'DKI Jakarta',
+                'Jawa Barat',
+                'Jawa Tengah',
+                'Jawa Timur',
+                'Banten',
+            ]
+        ]);
+
+        // 2. Patient submits medical record with physical parameters
+        $response = $this->actingAs($patient)->post('/pasien/rekam-medis', [
+            'keluhan' => 'Saya merasa sesak dan nyeri dada saat beraktivitas berat.',
+            'usia' => 30,
+            'tensi_darah' => '145/95',
+            'suhu_tubuh' => 38.2,
+            'detak_jantung' => 105,
+            'berat_badan' => 70,
+        ]);
+        $response->assertRedirect('/pasien/rekam-medis');
+
+        // Verify rekam medis in database has calculated conclusion
+        $this->assertDatabaseHas('rekam_medis', [
+            'pasien_id' => $patient->id,
+            'usia' => 30,
+            'tensi_darah' => '145/95',
+            'suhu_tubuh' => 38.2,
+            'detak_jantung' => 105,
+            'berat_badan' => 70,
+        ]);
+
+        $rekamMedis = RekamMedis::where('pasien_id', $patient->id)->orderBy('id', 'desc')->first();
+        $this->assertNotNull($rekamMedis);
+        // Verify conclusion contains physical readings and recommended spec
+        $this->assertStringContainsString('Hipertermia/Demam (38.2 °C)', $rekamMedis->kesimpulan_awal);
+        $this->assertStringContainsString('Kecenderungan Hipertensi (145/95 mmHg)', $rekamMedis->kesimpulan_awal);
+        $this->assertStringContainsString('Takikardia (Detak Jantung Cepat: 105 bpm)', $rekamMedis->kesimpulan_awal);
+        $this->assertStringContainsString('Dokter Spesialis Jantung', $rekamMedis->kesimpulan_awal);
+
+        // 3. Customer Service ticketing
+        // Patient submits ticket
+        $response = $this->actingAs($patient)->post('/pasien/bantuan/kirim', [
+            'pesan' => 'Saya kesulitan melakukan verifikasi pembayaran untuk resep.',
+        ]);
+        $response->assertRedirect('/pasien/bantuan');
+        $this->assertDatabaseHas('customer_services', [
+            'pasien_id' => $patient->id,
+            'pesan' => 'Saya kesulitan melakukan verifikasi pembayaran untuk resep.',
+            'status' => 'menunggu',
+        ]);
+
+        $ticket = \App\Models\CustomerService::where('pasien_id', $patient->id)->orderBy('id', 'desc')->first();
+        $this->assertNotNull($ticket);
+
+        // Admin replies to ticket
+        $response = $this->actingAs($admin)->post('/admin/bantuan/' . $ticket->id . '/balas', [
+            'balasan' => 'Baik pak Jefri, pembayaran bapak sudah kami verifikasi secara manual. Silakan cek status pesanan.',
+        ]);
+        $response->assertRedirect('/admin/bantuan');
+        $this->assertDatabaseHas('customer_services', [
+            'id' => $ticket->id,
+            'balasan' => 'Baik pak Jefri, pembayaran bapak sudah kami verifikasi secara manual. Silakan cek status pesanan.',
+            'status' => 'selesai',
+        ]);
+
+        // 4. Polyclinic prefix-based queue numbers
+        // Update doctor specification to Anak (or verify what is seeded)
+        $doctor->update(['spesialis' => 'Anak']);
+
+        // Patient submits another rekam medis
+        $this->actingAs($patient)->post('/pasien/rekam-medis', [
+            'keluhan' => 'Anak saya demam tinggi sejak kemarin sore.',
+            'usia' => 5,
+            'suhu_tubuh' => 39.5,
+        ]);
+        $rekamMedisAnak1 = RekamMedis::where('pasien_id', $patient->id)->orderBy('id', 'desc')->first();
+
+        // Doctor diagnoses as parah
+        $tgl_janji = date('Y-m-d', strtotime('+1 day'));
+        $response = $this->actingAs($doctor)->post('/dokter/diagnosa/simpan', [
+            'id' => $rekamMedisAnak1->id,
+            'diagnosa' => 'Demam Berdarah Dengue',
+            'status_diagnosa' => 'parah',
+            'tgl_janji' => $tgl_janji,
+            'jam_janji' => '09:00',
+        ]);
+        $response->assertRedirect('/dokter/diagnosa');
+        
+        // Verify queue was created with prefix 'A' for Poli Anak and sequence '01' -> 'A-01'
+        $this->assertDatabaseHas('janji_temus', [
+            'pasien_id' => $patient->id,
+            'poli' => 'Poli Anak',
+            'tanggal' => $tgl_janji,
+            'nomor_antrean' => 'A-01',
+        ]);
+
+        // Submit another rekam medis to test sequence increment
+        $this->actingAs($patient)->post('/pasien/rekam-medis', [
+            'keluhan' => 'Balita saya batuk pilek berat.',
+            'usia' => 3,
+        ]);
+        $rekamMedisAnak2 = RekamMedis::where('pasien_id', $patient->id)->orderBy('id', 'desc')->first();
+
+        // Doctor diagnoses second as parah on the same day
+        $response = $this->actingAs($doctor)->post('/dokter/diagnosa/simpan', [
+            'id' => $rekamMedisAnak2->id,
+            'diagnosa' => 'Bronkopneumonia Ringan',
+            'status_diagnosa' => 'parah',
+            'tgl_janji' => $tgl_janji,
+            'jam_janji' => '09:30',
+        ]);
+        
+        $this->assertDatabaseHas('janji_temus', [
+            'pasien_id' => $patient->id,
+            'poli' => 'Poli Anak',
+            'tanggal' => $tgl_janji,
+            'nomor_antrean' => 'A-02',
+        ]);
+
+        // 5. Admin schedule CRUD
+        $response = $this->actingAs($admin)->post('/admin/jadwal/tambah', [
+            'doctor_id' => $doctor->id,
+            'tanggal' => date('Y-m-d', strtotime('+3 days')),
+            'start_time' => '08:00',
+            'end_time' => '12:00',
+            'ruangan' => 'Poliklinik Anak 1',
+            'kuota' => 15,
+        ]);
+        $response->assertRedirect('/admin/jadwal');
+        $this->assertDatabaseHas('jadwal_dokters', [
+            'doctor_id' => $doctor->id,
+            'tanggal' => date('Y-m-d', strtotime('+3 days')),
+            'start_time' => '08:00',
+            'end_time' => '12:00',
+            'ruangan' => 'Poliklinik Anak 1',
+            'kuota' => 15,
+        ]);
+
+        $jadwal = JadwalDokter::where('doctor_id', $doctor->id)->orderBy('id', 'desc')->first();
+        $this->assertNotNull($jadwal);
+
+        // Edit schedule
+        $response = $this->actingAs($admin)->post('/admin/jadwal/' . $jadwal->id . '/update', [
+            'doctor_id' => $doctor->id,
+            'tanggal' => date('Y-m-d', strtotime('+3 days')),
+            'start_time' => '08:00',
+            'end_time' => '11:00', // change end time
+            'ruangan' => 'Poliklinik Anak Utama', // change room
+            'kuota' => 20, // change quota
+        ]);
+        $response->assertRedirect('/admin/jadwal');
+        $this->assertDatabaseHas('jadwal_dokters', [
+            'id' => $jadwal->id,
+            'start_time' => '08:00',
+            'end_time' => '11:00',
+            'ruangan' => 'Poliklinik Anak Utama',
+            'kuota' => 20,
+        ]);
+    }
+
+    public function test_chat_session_history_and_deletion()
+    {
+        $this->seed();
+
+        $patient = User::where('email', 'pasien@med.com')->first();
+        $doctor = User::where('email', 'dokter1@med.com')->first();
+
+        // 1. Visit chat page with doctor ID to create consultation session
+        $response = $this->actingAs($patient)->get('/pasien/chat/' . $doctor->id);
+        $response->assertStatus(200);
+
+        // Verify consultation created
+        $this->assertDatabaseHas('konsultasis', [
+            'pasien_id' => $patient->id,
+            'dokter_id' => $doctor->id,
+            'status' => 'aktif',
+        ]);
+
+        $konsultasi = Konsultasi::where('pasien_id', $patient->id)->where('dokter_id', $doctor->id)->first();
+
+        // 2. Patient sends a message
+        $response = $this->actingAs($patient)->post('/pasien/chat/send', [
+            'dokter_id' => $doctor->id,
+            'pesan' => 'Halo Dokter, ini tes pesan.',
+        ]);
+        $response->assertRedirect('/pasien/chat/' . $doctor->id);
+
+        $this->assertDatabaseHas('pesan_chats', [
+            'konsultasi_id' => $konsultasi->id,
+            'pesan' => 'Halo Dokter, ini tes pesan.',
+        ]);
+
+        // 3. Go back to main chat page to check history
+        $response = $this->actingAs($patient)->get('/pasien/chat');
+        $response->assertStatus(200);
+        $response->assertSee('Riwayat Konsultasi Chat Anda');
+        $response->assertSee('dr. ' . $doctor->name);
+
+        // 4. Delete the chat session
+        $response = $this->actingAs($patient)->delete('/pasien/chat/session/' . $konsultasi->id);
+        $response->assertRedirect('/pasien/chat');
+
+        // Verify consultation and message are gone from database
+        $this->assertDatabaseMissing('konsultasis', [
+            'id' => $konsultasi->id,
+        ]);
+        $this->assertDatabaseMissing('pesan_chats', [
+            'konsultasi_id' => $konsultasi->id,
+        ]);
+    }
 }
+
 

@@ -43,6 +43,36 @@
                 MedicareSystem Administration Portal. Gunakan panel navigasi di sebelah kiri untuk mengelola daftar dokter, melihat data pasien terdaftar, memantau jadwal praktik, memverifikasi janji temu dan antrean, serta mempublikasikan portal berita kesehatan.
             </p>
         </div>
+
+        <div class="card">
+            <h2><i class="fas fa-hospital-user"></i> Status Antrean Aktif Per Poliklinik</h2>
+            <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">Jumlah pasien terdaftar dalam antrean aktif yang sedang berjalan saat ini.</p>
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px;">
+                @php
+                    $polis = [
+                        'Poli Umum' => ['color' => '#2b9e6e', 'icon' => 'fas fa-stethoscope'],
+                        'Poli Anak' => ['color' => '#3498db', 'icon' => 'fas fa-baby'],
+                        'Poli Jantung' => ['color' => '#e74c3c', 'icon' => 'fas fa-heartbeat'],
+                        'Poli Saraf' => ['color' => '#9b59b6', 'icon' => 'fas fa-brain'],
+                        'Poli Mata' => ['color' => '#1abc9c', 'icon' => 'fas fa-eye'],
+                        'Poli Gigi' => ['color' => '#f39c12', 'icon' => 'fas fa-tooth'],
+                        'Poli Kandungan' => ['color' => '#e91e63', 'icon' => 'fas fa-baby-carriage']
+                    ];
+                @endphp
+                @foreach($polis as $name => $meta)
+                    @php
+                        $count = \App\Models\JanjiTemu::where('poli', $name)->whereIn('status', ['menunggu', 'konfirmasi'])->count();
+                    @endphp
+                    <div class="stat-card" style="border-left: 4px solid {{ $meta['color'] }}; padding: 15px; background: white; border-radius: 12px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-sm);">
+                        <div class="icon-wrapper" style="background: rgba(0,0,0,0.02); color: {{ $meta['color'] }}; width: 40px; height: 40px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; border-radius: 50%;"><i class="{{ $meta['icon'] }}"></i></div>
+                        <div>
+                            <h3 style="font-size: 1.3rem; font-weight: 800; color: #0b2b4d; margin: 0;">{{ $count }}</h3>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin: 0;">{{ $name }}</p>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
     @endif
 
     <!-- ==================== KELOLA DOKTER TAB ==================== -->
@@ -73,6 +103,9 @@
                                 <td>{{ $d->no_hp ?: '-' }}</td>
                                 <td>{{ $d->username }}</td>
                                 <td>
+                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditDokter({{ json_encode($d) }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
                                     <a href="/admin/dokter/{{ $d->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus akun Dokter ini?')">
                                         <i class="fas fa-trash"></i> Hapus
                                     </a>
@@ -117,6 +150,40 @@
                     <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
                         <button type="button" class="btn btn-danger" onclick="tutupModalDokter()">Batal</button>
                         <button type="submit" class="btn">Simpan Data</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- EDIT DOCTOR MODAL -->
+        <div id="modalEditDokter" class="modal">
+            <div class="modal-content">
+                <h3>Edit Data Dokter</h3>
+                <form id="formEditDokter" action="" method="POST" style="margin-top: 15px;">
+                    @csrf
+                    <div class="form-group">
+                        <label for="edit_dokter_name">Nama Lengkap</label>
+                        <input type="text" name="name" id="edit_dokter_name" required placeholder="Contoh: dr. Ahmad Subarjo, Sp.A">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_dokter_spesialis">Spesialisasi</label>
+                        <input type="text" name="spesialis" id="edit_dokter_spesialis" required placeholder="Contoh: Anak, Jantung, Mata, Saraf">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_dokter_no_hp">No. Handphone</label>
+                        <input type="text" name="no_hp" id="edit_dokter_no_hp" placeholder="Contoh: 08123456789">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_dokter_username">Username Akun</label>
+                        <input type="text" name="username" id="edit_dokter_username" required placeholder="Contoh: ahmadsubarjo">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_dokter_password">Password Baru (Opsional)</label>
+                        <input type="password" name="password" id="edit_dokter_password" placeholder="Kosongkan jika tidak ingin mengubah password">
+                    </div>
+                    <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-danger" onclick="tutupModalEditDokter()">Batal</button>
+                        <button type="submit" class="btn">Simpan Perubahan</button>
                     </div>
                 </form>
             </div>
@@ -273,8 +340,12 @@
             </div>
         </div>
 
-        <div class="card">
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-direction: row; flex-wrap: wrap; gap: 10px;">
             <h2><i class="fas fa-list"></i> Daftar Jadwal Praktik Dokter</h2>
+            <button class="btn" onclick="bukaModalJadwal()"><i class="fas fa-plus"></i> Tambah Jadwal Baru</button>
+        </div>
+
+        <div class="card">
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -298,6 +369,9 @@
                                 <td>{{ $j->ruangan ?: '-' }}</td>
                                 <td>{{ $j->kuota }} Pasien</td>
                                 <td>
+                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditJadwal({{ json_encode($j) }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
                                     <a href="/admin/jadwal/{{ $j->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus jadwal ini?')">
                                         <i class="fas fa-trash"></i> Hapus
                                     </a>
@@ -323,7 +397,7 @@
                     <thead>
                         <tr>
                             <th>Nama Pasien</th>
-                            <th>Dokter Rujukan</th>
+                            <th>Dokter & Poli</th>
                             <th>Tanggal</th>
                             <th>Jam</th>
                             <th>Nomor Antrean</th>
@@ -335,7 +409,10 @@
                         @forelse($janji_list as $j)
                             <tr>
                                 <td><strong>{{ $j->pasien_name }}</strong></td>
-                                <td>{{ $j->dokter_name }}</td>
+                                <td>
+                                    <strong>{{ $j->dokter_name }}</strong><br>
+                                    <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent);">{{ $j->poli ?: 'Poli Umum' }}</span>
+                                </td>
                                 <td>{{ date('d/m/Y', strtotime($j->tanggal)) }}</td>
                                 <td>{{ $j->jam }} WIB</td>
                                 <td><span class="queue-no" style="font-size: 1.1rem;">{{ $j->nomor_antrean }}</span></td>
@@ -409,7 +486,7 @@
     @if($page === 'berita')
         <div class="card">
             <h2><i class="fas fa-plus-circle"></i> Tambah Berita Baru</h2>
-            <form action="/admin/berita/tambah" method="POST">
+            <form action="/admin/berita/tambah" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="form-group">
                     <label for="judul">Judul Berita</label>
@@ -418,6 +495,10 @@
                 <div class="form-group">
                     <label for="konten">Konten Berita</label>
                     <textarea name="konten" id="konten" rows="5" required placeholder="Tulis artikel berita secara detail di sini..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="gambar">Gambar Utama Berita</label>
+                    <input type="file" name="gambar" id="gambar" accept="image/*" style="padding: 10px; border-radius: var(--border-radius-md); background: #f8fafc; border: 2px solid var(--border-color);">
                 </div>
                 <button type="submit" class="btn"><i class="fas fa-paper-plane"></i> Publikasikan Artikel</button>
             </form>
@@ -430,6 +511,7 @@
                     <thead>
                         <tr>
                             <th>Tanggal</th>
+                            <th>Gambar</th>
                             <th>Judul Berita</th>
                             <th>Ringkasan Konten</th>
                             <th>Aksi</th>
@@ -439,9 +521,19 @@
                         @forelse($berita_list as $b)
                             <tr>
                                 <td>{{ date('d/m/Y', strtotime($b->tanggal)) }}</td>
+                                <td>
+                                    @if($b->gambar)
+                                        <img src="{{ asset('storage/' . $b->gambar) }}" alt="{{ $b->judul }}" style="width: 60px; height: 45px; object-fit: cover; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+                                    @else
+                                        <span style="color: var(--text-muted); font-size: 0.8rem; font-style: italic;">Tidak ada</span>
+                                    @endif
+                                </td>
                                 <td><strong>{{ $b->judul }}</strong></td>
                                 <td>{{ Str::limit($b->konten, 90) }}</td>
                                 <td>
+                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditBerita({{ json_encode($b) }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
                                     <a href="/admin/berita/{{ $b->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus berita ini?')">
                                         <i class="fas fa-trash"></i> Hapus
                                     </a>
@@ -449,11 +541,48 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" style="text-align: center;">Belum ada artikel berita yang dipublikasikan.</td>
+                                <td colspan="5" style="text-align: center;">Belum ada artikel berita yang dipublikasikan.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- EDIT BERITA MODAL -->
+        <div id="modalEditBerita" class="modal">
+            <div class="modal-content">
+                <h3>Edit Artikel Berita</h3>
+                <form id="formEditBerita" action="" method="POST" enctype="multipart/form-data" style="margin-top: 15px;">
+                    @csrf
+                    <div class="form-group">
+                        <label for="edit_berita_judul">Judul Berita</label>
+                        <input type="text" name="judul" id="edit_berita_judul" required placeholder="Masukkan judul berita kesehatan...">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_berita_konten">Konten Berita</label>
+                        <textarea name="konten" id="edit_berita_konten" rows="5" required placeholder="Tulis artikel berita secara detail di sini..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Gambar Saat Ini</label>
+                        <div id="previewEditBeritaGambarDiv" style="margin-top: 5px; margin-bottom: 10px;">
+                            <img id="previewEditBeritaGambar" src="" style="max-width: 150px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); display: none;">
+                            <span id="noEditBeritaGambarText" style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">Tidak ada gambar</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_berita_gambar">Gambar Utama Baru (Opsional)</label>
+                        <input type="file" name="gambar" id="edit_berita_gambar" accept="image/*" style="padding: 10px; border-radius: var(--border-radius-md); background: #f8fafc; border: 2px solid var(--border-color);">
+                        <small style="color: var(--text-muted); display: block; margin-top: 4px;">Kosongkan jika tidak ingin mengganti gambar utama.</small>
+                    </div>
+
+                    <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-danger" onclick="tutupModalEditBerita()">Batal</button>
+                        <button type="submit" class="btn">Simpan Perubahan</button>
+                    </div>
+                </form>
             </div>
         </div>
     @endif
@@ -526,6 +655,264 @@
         </div>
     @endif
 
+    <!-- ==================== BANTUAN / CS TAB ==================== -->
+    @if($page === 'bantuan')
+        @php
+            $totalTiket = $bantuan_list->count();
+            $menungguTiket = $bantuan_list->where('status', 'menunggu')->count();
+            $selesaiTiket = $bantuan_list->where('status', 'selesai')->count();
+        @endphp
+
+        <style>
+            .admin-ticket-container {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            .admin-ticket-card {
+                background: var(--bg-card);
+                border-radius: var(--border-radius-lg);
+                border: 1px solid var(--border-color);
+                padding: 24px;
+                box-shadow: var(--shadow-sm);
+                transition: var(--transition);
+            }
+            .admin-ticket-card:hover {
+                box-shadow: var(--shadow-md);
+                border-color: rgba(43, 158, 110, 0.2);
+            }
+            .admin-ticket-card.ticket-pending {
+                border-left: 6px solid #f59e0b;
+            }
+            .admin-ticket-card.ticket-resolved {
+                border-left: 6px solid var(--accent);
+            }
+            .ticket-meta-info {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 12px;
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 12px;
+                margin-bottom: 16px;
+            }
+            .patient-profile {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .patient-avatar {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                background: var(--accent-light);
+                color: var(--accent);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 0.9rem;
+            }
+            .patient-name-container {
+                display: flex;
+                flex-direction: column;
+            }
+            .patient-name {
+                font-weight: 700;
+                color: var(--primary);
+                font-size: 0.95rem;
+            }
+            .ticket-timestamp {
+                font-size: 0.75rem;
+                color: var(--text-muted);
+            }
+            .admin-ticket-body {
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+            }
+            .chat-thread {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .chat-msg {
+                padding: 14px 18px;
+                border-radius: var(--border-radius-md);
+                font-size: 0.9rem;
+                line-height: 1.5;
+                max-width: 85%;
+            }
+            .chat-msg.msg-incoming {
+                background: #f1f5f9;
+                color: var(--text-main);
+                align-self: flex-start;
+                border-top-left-radius: 4px;
+                border: 1px solid var(--border-color);
+            }
+            .chat-msg.msg-outgoing {
+                background: var(--accent-light);
+                color: #15803d;
+                align-self: flex-end;
+                border-top-right-radius: 4px;
+                border: 1px solid #bbf7d0;
+            }
+            .chat-lbl {
+                font-size: 0.75rem;
+                font-weight: 700;
+                margin-bottom: 4px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .chat-msg.msg-incoming .chat-lbl {
+                color: var(--primary);
+            }
+            .chat-msg.msg-outgoing .chat-lbl {
+                color: var(--accent);
+            }
+            .ticket-action-bar {
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+                margin-top: 16px;
+                border-top: 1px solid var(--border-color);
+                padding-top: 16px;
+                flex-wrap: wrap;
+            }
+        </style>
+
+        <div class="card">
+            <h2><i class="fas fa-headset" style="color: var(--accent);"></i> Tiket Layanan Bantuan (Customer Service)</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">
+                Berikut adalah daftar keluhan, kendala, atau pertanyaan yang diajukan oleh pasien. Berikan tanggapan solusi medis/teknis dan selesaikan tiket bantuan.
+            </p>
+        </div>
+
+        <!-- Support Statistics Panels -->
+        <div class="stats-grid" style="margin-bottom: 24px;">
+            <div class="stat-card">
+                <div class="icon-wrapper" style="background: rgba(11, 43, 77, 0.1); color: var(--primary);">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <div>
+                    <h3>{{ $totalTiket }}</h3>
+                    <p>Total Tiket Masuk</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon-wrapper" style="background: rgba(245, 158, 11, 0.1); color: #d97706;">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div>
+                    <h3>{{ $menungguTiket }}</h3>
+                    <p>Menunggu Balasan</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: #15803d;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div>
+                    <h3>{{ $selesaiTiket }}</h3>
+                    <p>Terselesaikan</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-list"></i> Daftar Tiket Masuk</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Kelola keluhan aktif pasien:</p>
+            
+            <div class="admin-ticket-container">
+                @forelse($bantuan_list as $b)
+                    <div class="admin-ticket-card {{ $b->status === 'selesai' ? 'ticket-resolved' : 'ticket-pending' }}">
+                        <div class="ticket-meta-info">
+                            <div class="patient-profile">
+                                <div class="patient-avatar">
+                                    {{ strtoupper(substr($b->pasien_name, 0, 2)) }}
+                                </div>
+                                <div class="patient-name-container">
+                                    <span class="patient-name">{{ $b->pasien_name }}</span>
+                                    <span class="ticket-timestamp"><i class="far fa-clock"></i> {{ date('d/m/Y H:i', strtotime($b->created_at)) }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="status-badge {{ $b->status === 'selesai' ? 'status-selesai' : 'status-menunggu' }}">
+                                    {{ $b->status === 'selesai' ? 'Terselesaikan' : 'Menunggu Tindakan' }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-ticket-body">
+                            <div class="chat-thread">
+                                <!-- Patient Request -->
+                                <div class="chat-msg msg-incoming">
+                                    <div class="chat-lbl"><i class="fas fa-user"></i> Pasien</div>
+                                    <p style="margin: 0; white-space: pre-line;">{{ $b->pesan }}</p>
+                                </div>
+                                
+                                <!-- CS Response -->
+                                @if($b->balasan)
+                                    <div class="chat-msg msg-outgoing">
+                                        <div class="chat-lbl"><i class="fas fa-user-shield"></i> Anda (CS)</div>
+                                        <p style="margin: 0; white-space: pre-line;">{{ $b->balasan }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                            
+                            @if($b->status === 'menunggu')
+                                <div class="ticket-action-bar">
+                                    <button class="btn btn-sm btn-warning" onclick="bukaModalBalasBantuan({{ json_encode($b) }})">
+                                        <i class="fas fa-reply"></i> Balas & Selesaikan
+                                    </button>
+                                    <a href="/admin/bantuan/{{ $b->id }}/selesai" class="btn btn-sm btn-success" onclick="return confirm('Apakah Anda yakin ingin menyelesaikan tiket ini tanpa balasan?')">
+                                        <i class="fas fa-check"></i> Tandai Selesai
+                                    </a>
+                                </div>
+                            @else
+                                <div class="ticket-action-bar" style="border: none; padding-top: 0; margin-top: 8px;">
+                                    <span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;"><i class="fas fa-lock"></i> Tiket Ditutup (Closed)</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                        <i class="fas fa-headset" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 12px;"></i>
+                        <p style="font-weight: 500;">Belum ada keluhan bantuan dari pasien yang masuk.</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- MODAL BALAS BANTUAN -->
+        <div id="modalBalasBantuan" class="modal">
+            <div class="modal-content" style="max-width: 550px;">
+                <h3><i class="fas fa-reply" style="color: var(--accent);"></i> Balas Tiket Bantuan Pasien</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">Kirim tanggapan solusi untuk membantu memecahkan kendala pasien.</p>
+                
+                <div style="margin-top: 10px; padding: 16px; background: #f8fafc; border-radius: var(--border-radius-md); font-size: 0.9rem; border: 1px solid var(--border-color); text-align: left;">
+                    <strong style="color: var(--primary); font-size: 0.85rem; display: block; margin-bottom: 4px;"><i class="fas fa-user"></i> Pesan Pasien (<span id="balasPasienNama"></span>):</strong>
+                    <p id="balasPesanTeks" style="margin: 0; font-style: italic; color: #475569; white-space: pre-line;"></p>
+                </div>
+                
+                <form id="formBalasBantuan" action="" method="POST" style="margin-top: 18px;">
+                    @csrf
+                    <div class="form-group">
+                        <label for="balasan_teks" style="font-weight: 600;">Tanggapan Solusi CS</label>
+                        <textarea name="balasan" id="balasan_teks" rows="5" placeholder="Ketik jawaban atau solusi Anda secara detail di sini..." required style="border-radius: var(--border-radius-md); border: 2px solid var(--border-color);"></textarea>
+                    </div>
+                    <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-danger" onclick="tutupModalBalasBantuan()">Batal</button>
+                        <button type="submit" class="btn"><i class="fas fa-paper-plane"></i> Kirim & Selesaikan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
 @endsection
 
 @section('scripts')
@@ -564,6 +951,18 @@
             function tutupModalDokter() {
                 document.getElementById('modalDokter').style.display = 'none';
             }
+            function bukaModalEditDokter(dokter) {
+                document.getElementById('formEditDokter').action = '/admin/dokter/' + dokter.id + '/update';
+                document.getElementById('edit_dokter_name').value = dokter.name;
+                document.getElementById('edit_dokter_spesialis').value = dokter.spesialis || '';
+                document.getElementById('edit_dokter_no_hp').value = dokter.no_hp || '';
+                document.getElementById('edit_dokter_username').value = dokter.username;
+                document.getElementById('edit_dokter_password').value = '';
+                document.getElementById('modalEditDokter').style.display = 'flex';
+            }
+            function tutupModalEditDokter() {
+                document.getElementById('modalEditDokter').style.display = 'none';
+            }
         </script>
     @endif
 
@@ -588,6 +987,165 @@
             }
             function tutupModalEditPasien() {
                 document.getElementById('modalEditPasien').style.display = 'none';
+            }
+        </script>
+    @endif
+
+    @if($page === 'berita')
+        <script>
+            function bukaModalEditBerita(berita) {
+                document.getElementById('formEditBerita').action = '/admin/berita/' + berita.id + '/edit';
+                document.getElementById('edit_berita_judul').value = berita.judul;
+                document.getElementById('edit_berita_konten').value = berita.konten;
+                
+                const previewImg = document.getElementById('previewEditBeritaGambar');
+                const noImgText = document.getElementById('noEditBeritaGambarText');
+                
+                if (berita.gambar) {
+                    previewImg.src = '/storage/' + berita.gambar;
+                    previewImg.style.display = 'block';
+                    noImgText.style.display = 'none';
+                } else {
+                    previewImg.src = '';
+                    previewImg.style.display = 'none';
+                    noImgText.style.display = 'block';
+                }
+                
+                document.getElementById('modalEditBerita').style.display = 'flex';
+            }
+            function tutupModalEditBerita() {
+                document.getElementById('modalEditBerita').style.display = 'none';
+            }
+        </script>
+    @endif
+
+    @if($page === 'jadwal')
+        <!-- ADD JADWAL MODAL -->
+        <div id="modalJadwal" class="modal">
+            <div class="modal-content">
+                <h3>Tambah Jadwal Dokter Baru</h3>
+                <form action="/admin/jadwal/tambah" method="POST" style="margin-top: 15px;">
+                    @csrf
+                    <div class="form-group">
+                        <label for="add_jadwal_doctor">Pilih Dokter Spesialis</label>
+                        <select name="doctor_id" id="add_jadwal_doctor" required style="padding: 10px; border-radius: 8px;">
+                            @foreach($dokter_list as $dok)
+                                <option value="{{ $dok->id }}">{{ $dok->name }} ({{ $dok->spesialis }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="add_jadwal_tanggal">Tanggal Praktik</label>
+                        <input type="date" name="tanggal" id="add_jadwal_tanggal" required min="{{ date('Y-m-d') }}">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="add_jadwal_start">Jam Mulai</label>
+                            <input type="time" name="start_time" id="add_jadwal_start" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="add_jadwal_end">Jam Selesai</label>
+                            <input type="time" name="end_time" id="add_jadwal_end" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="add_jadwal_ruangan">Ruangan</label>
+                            <input type="text" name="ruangan" id="add_jadwal_ruangan" placeholder="Contoh: Poliklinik B-10">
+                        </div>
+                        <div class="form-group">
+                            <label for="add_jadwal_kuota">Kuota Pasien</label>
+                            <input type="number" name="kuota" id="add_jadwal_kuota" value="10" min="1" required>
+                        </div>
+                    </div>
+                    <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-danger" onclick="tutupModalJadwal()">Batal</button>
+                        <button type="submit" class="btn">Simpan Jadwal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- EDIT JADWAL MODAL -->
+        <div id="modalEditJadwal" class="modal">
+            <div class="modal-content">
+                <h3>Edit Jadwal Dokter</h3>
+                <form id="formEditJadwal" action="" method="POST" style="margin-top: 15px;">
+                    @csrf
+                    <div class="form-group">
+                        <label for="edit_jadwal_doctor">Pilih Dokter Spesialis</label>
+                        <select name="doctor_id" id="edit_jadwal_doctor" required style="padding: 10px; border-radius: 8px;">
+                            @foreach($dokter_list as $dok)
+                                <option value="{{ $dok->id }}">{{ $dok->name }} ({{ $dok->spesialis }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_jadwal_tanggal">Tanggal Praktik</label>
+                        <input type="date" name="tanggal" id="edit_jadwal_tanggal" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_jadwal_start">Jam Mulai</label>
+                            <input type="time" name="start_time" id="edit_jadwal_start" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_jadwal_end">Jam Selesai</label>
+                            <input type="time" name="end_time" id="edit_jadwal_end" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_jadwal_ruangan">Ruangan</label>
+                            <input type="text" name="ruangan" id="edit_jadwal_ruangan" placeholder="Contoh: Poliklinik B-10">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_jadwal_kuota">Kuota Pasien</label>
+                            <input type="number" name="kuota" id="edit_jadwal_kuota" min="1" required>
+                        </div>
+                    </div>
+                    <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-danger" onclick="tutupModalEditJadwal()">Batal</button>
+                        <button type="submit" class="btn">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function bukaModalJadwal() {
+                document.getElementById('modalJadwal').style.display = 'flex';
+            }
+            function tutupModalJadwal() {
+                document.getElementById('modalJadwal').style.display = 'none';
+            }
+            function bukaModalEditJadwal(jadwal) {
+                document.getElementById('formEditJadwal').action = '/admin/jadwal/' + jadwal.id + '/update';
+                document.getElementById('edit_jadwal_doctor').value = jadwal.doctor_id;
+                document.getElementById('edit_jadwal_tanggal').value = jadwal.tanggal;
+                document.getElementById('edit_jadwal_start').value = jadwal.start_time;
+                document.getElementById('edit_jadwal_end').value = jadwal.end_time;
+                document.getElementById('edit_jadwal_ruangan').value = jadwal.ruangan || '';
+                document.getElementById('edit_jadwal_kuota').value = jadwal.kuota;
+                document.getElementById('modalEditJadwal').style.display = 'flex';
+            }
+            function tutupModalEditJadwal() {
+                document.getElementById('modalEditJadwal').style.display = 'none';
+            }
+        </script>
+    @endif
+
+    @if($page === 'bantuan')
+        <script>
+            function bukaModalBalasBantuan(bantuan) {
+                document.getElementById('formBalasBantuan').action = '/admin/bantuan/' + bantuan.id + '/balas';
+                document.getElementById('balasPasienNama').innerText = bantuan.pasien_name;
+                document.getElementById('balasPesanTeks').innerText = bantuan.pesan;
+                document.getElementById('balasan_teks').value = '';
+                document.getElementById('modalBalasBantuan').style.display = 'flex';
+            }
+            function tutupModalBalasBantuan() {
+                document.getElementById('modalBalasBantuan').style.display = 'none';
             }
         </script>
     @endif
