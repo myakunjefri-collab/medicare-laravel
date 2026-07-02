@@ -93,7 +93,7 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        User::create([
+        User::firstOrCreate(['email' => 'dokter7@med.com'], [
             'name' => 'dr. Hendra Kurniawan, Sp.THT',
             'email' => 'dokter7@med.com',
             'username' => 'dokter7',
@@ -104,7 +104,7 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        User::create([
+        User::firstOrCreate(['email' => 'dokter8@med.com'], [
             'name' => 'dr. Linda Lestari, Sp.KK',
             'email' => 'dokter8@med.com',
             'username' => 'dokter8',
@@ -115,7 +115,7 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        User::create([
+        User::firstOrCreate(['email' => 'dokter9@med.com'], [
             'name' => 'dr. Yusuf Pratama, Sp.B',
             'email' => 'dokter9@med.com',
             'username' => 'dokter9',
@@ -125,6 +125,7 @@ class DatabaseSeeder extends Seeder
             'no_hp' => '08122334444',
             'is_active' => true,
         ]);
+
 
         // Patient
         User::create([
