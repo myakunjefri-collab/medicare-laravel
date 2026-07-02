@@ -88,5 +88,39 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/admin/jadwal/{id}/update', [AdminController::class, 'updateJadwal']);
     Route::get('/admin/bantuan', [AdminController::class, 'bantuan']);
     Route::post('/admin/bantuan/{id}/balas', [AdminController::class, 'balasBantuan']);
-    Route::get('/admin/bantuan/{id}/selesai', [AdminController::class, 'selesaiBantuan']);
 });
+
+// Symlink Helper Route for Shared Hosting (InfinityFree)
+Route::get('/generate-symlink', function () {
+    $target = storage_path('app/public');
+    $shortcut = public_path('storage');
+    
+    // Check if the symlink or directory already exists
+    if (file_exists($shortcut)) {
+        if (is_link($shortcut)) {
+            return response()->json(['status' => 'success', 'message' => 'Symlink already exists and is a valid symbolic link.']);
+        }
+        return response()->json(['status' => 'warning', 'message' => 'A physical folder or file exists at public/storage. Please delete it first so the symlink can be created.']);
+    }
+    
+    try {
+        symlink($target, $shortcut);
+        return response()->json(['status' => 'success', 'message' => 'Symlink created successfully.']);
+    } catch (\Exception $e) {
+        return response()->json(['status' => 'error', 'message' => 'Failed to create symlink: ' . $e->getMessage()]);
+    }
+});
+
+// Temporary Route for Database Migration on Shared Hosting (InfinityFree)
+Route::get('/run-migrations', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', [
+            '--seed' => true,
+            '--force' => true
+        ]);
+        return 'Database migration and seeding completed successfully!';
+    } catch (\Exception $e) {
+        return 'Error during migration: ' . $e->getMessage();
+    }
+});
+

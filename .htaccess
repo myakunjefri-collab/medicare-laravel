@@ -1,0 +1,19 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # 1. Protect sensitive files from being accessed directly
+    RedirectMatch 403 /\.(git|env|editorconfig|gitattributes)$
+    RedirectMatch 403 /(composer\.json|composer\.lock|package\.json|phpunit\.xml|artisan|package-lock\.json|vite.config.js)$
+    RedirectMatch 403 ^/app/
+    RedirectMatch 403 ^/bootstrap/
+    RedirectMatch 403 ^/config/
+    RedirectMatch 403 ^/database/
+    RedirectMatch 403 ^/resources/
+    RedirectMatch 403 ^/routes/
+    RedirectMatch 403 ^/tests/
+    RedirectMatch 403 ^/vendor/
+
+    # 2. Redirect all normal traffic to the public directory
+    RewriteRule ^$ public/ [L]
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

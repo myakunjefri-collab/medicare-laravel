@@ -86,6 +86,90 @@ class AuthController extends Controller
         return back()->with('register_success', 'Pendaftaran berhasil! Silakan login dengan akun Anda.');
     }
 
+    public function apiLogin(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $login = $credentials['email'];
+        $password = $credentials['password'];
+        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        if (Auth::attempt([$field => $login, 'password' => $password, 'is_active' => true])) {
+            $user = Auth::user();
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                ]
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'Email/Username atau password salah!'
+        ], 401);
+    }
+
+    public function apiRegister(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'fullname' => 'required|string|max:255',
+            'age' => 'required|integer|min:1',
+            'email' => 'required|string|email|max:255|unique:users',
+            'phone' => 'required|string|max:20',
+            'gender' => 'required|string',
+            'alamat' => 'nullable|string|max:255',
+            'password' => 'required|string|min:6',
+            'confirm_password' => 'required|same:password',
+        ], [
+            'email.unique' => 'Email sudah terdaftar! Silakan gunakan email lain.',
+            'confirm_password.same' => 'Konfirmasi password tidak cocok!',
+            'password.min' => 'Password minimal 6 karakter!',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Data yang dikirim tidak valid',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::create([
+            'name' => $request->fullname,
+            'email' => $request->email,
+            'username' => explode('@', $request->email)[0],
+            'password' => Hash::make($request->password),
+            'role' => 'pasien',
+            'age' => $request->age,
+            'gender' => $request->gender,
+            'phone' => $request->phone,
+            'alamat' => $request->alamat,
+            'is_active' => true,
+        ]);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Pendaftaran berhasil!',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+            ]
+        ], 201);
+    }
+
     public function logout(Request $request)
     {
         Auth::logout();
