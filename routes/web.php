@@ -110,17 +110,3 @@ Route::get('/generate-symlink', function () {
         return response()->json(['status' => 'error', 'message' => 'Failed to create symlink: ' . $e->getMessage()]);
     }
 });
-
-// Temporary Route for Database Migration on Shared Hosting (InfinityFree)
-Route::get('/run-migrations', function () {
-    try {
-        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', [
-            '--seed' => true,
-            '--force' => true
-        ]);
-        return 'Database migration and seeding completed successfully!';
-    } catch (\Exception $e) {
-        return 'Error during migration: ' . $e->getMessage();
-    }
-});
-
