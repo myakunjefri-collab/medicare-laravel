@@ -36,7 +36,7 @@ return [
     ],
 
     'gemini' => [
-        'key' => env('jd'),
+        'key' => env('GEMINI_API_KEY'),
     ],
 
 ];
