@@ -948,36 +948,12 @@
                 // 3. Scroll to bottom
                 scrollToBottom();
 
-                // 4. Query AI backend
-                fetch('/pasien/chatbot/query', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ pesan: messageText })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Server error');
-                    }
-                    return response.json();
-                })
-                .then(data => {
+                // 4. Respond using the offline local keyword matcher (simulating response time)
+                setTimeout(() => {
                     removeTypingIndicator(typingId);
-                    if (data.success) {
-                        renderAiResponse(messageText, data.message, data.recommended_doctor_ids);
-                    } else {
-                        // Backend returned false (GEMINI_API_KEY not configured)
-                        triggerFallback(typingId, messageText, data.message);
-                    }
+                    generateBotResponseStandard(messageText);
                     scrollToBottom();
-                })
-                .catch(error => {
-                    removeTypingIndicator(typingId);
-                    triggerFallback(typingId, messageText, 'Terjadi kendala jaringan saat menghubungi AI.');
-                    scrollToBottom();
-                });
+                }, 750);
             }
 
             function triggerFallback(typingId, messageText, reason) {
