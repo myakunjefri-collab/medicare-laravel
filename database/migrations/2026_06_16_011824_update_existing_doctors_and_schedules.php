@@ -30,7 +30,7 @@ return new class extends Migration
             if ($doctor) {
                 $doctor->update(['name' => $newName]);
 
-                // Update doctor's name in schedule table
+                // Perbarui nama dokter di jadwal
                 \App\Models\JadwalDokter::where('doctor_id', $doctor->id)
                     ->update(['doctor_name' => $newName]);
             }
@@ -42,6 +42,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // No operations needed for down()
+        // Tidak ada operasi untuk down
     }
 };

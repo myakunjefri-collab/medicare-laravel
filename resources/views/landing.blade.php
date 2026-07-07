@@ -650,7 +650,7 @@
         </div>
         
         <div class="bps-grid" id="penyakitGrid">
-            <!-- Will be populated dynamically via javascript -->
+            <!-- Diisi dinamis via Javascript -->
         </div>
     </div>
 
@@ -802,7 +802,7 @@
                 });
         }
         
-        // Load initial value on DOM loaded
+        // Muat nilai DOM awal
         document.addEventListener('DOMContentLoaded', function() {
             const selectVal = document.getElementById('selectWilayah');
             if (selectVal) {

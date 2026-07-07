@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('pasien_name');
             $table->string('dokter_name');
             $table->date('tanggal');
-            $table->string('jam'); // original used string like '10:00'
+            $table->string('jam'); // menyimpan waktu janji temu
             $table->enum('status', ['menunggu', 'konfirmasi', 'selesai', 'dibatalkan'])->default('menunggu');
             $table->string('nomor_antrean');
             $table->text('keluhan');

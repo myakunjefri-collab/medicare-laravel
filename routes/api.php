@@ -4,11 +4,11 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\QueueApiController;
 
-// Public Authentication Endpoints
+// Endpoint Autentikasi Publik
 Route::post('/register', [AuthController::class, 'apiRegister']);
 Route::post('/login', [AuthController::class, 'apiLogin']);
 
-// Protected API Endpoints
+// Endpoint API Terproteksi
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();

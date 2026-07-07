@@ -15,12 +15,12 @@ class QueueApiController extends Controller
     {
         $query = JanjiTemu::query();
 
-        // Filter based on doctor name if specified
+        // Saring berdasarkan nama dokter
         if ($request->has('doctor')) {
             $query->where('dokter_name', 'like', '%' . $request->doctor . '%');
         }
 
-        // Filter based on date range (start_date and end_date) as required by PDF page 12
+        // Saring berdasarkan rentang tanggal
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('tanggal', [$request->start_date, $request->end_date]);
         } elseif ($request->filled('start_date')) {
@@ -29,7 +29,7 @@ class QueueApiController extends Controller
             $query->where('tanggal', '<=', $request->end_date);
         }
 
-        // Paginate by 10 items per page
+        // Batasi 10 data per halaman
         $queues = $query->paginate(10);
 
         return QueueResource::collection($queues);
@@ -39,7 +39,7 @@ class QueueApiController extends Controller
     {
         $user = $request->user();
 
-        // Calculate next queue number dynamically
+        // Hitung nomor antrean berikutnya
         $count = JanjiTemu::where('dokter_name', $request->dokter_name)
             ->where('tanggal', $request->tanggal)
             ->count();

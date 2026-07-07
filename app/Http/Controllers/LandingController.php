@@ -9,7 +9,7 @@ class LandingController extends Controller
 {
     public function index()
     {
-        // Default health statistics
+        // Statistik kesehatan default
         $health_data = [
             ["icon" => "fas fa-hospital", "nilai" => "3.012", "nama" => "Jumlah Rumah Sakit", "tahun" => "2024", "keterangan" => "RS umum dan khusus"],
             ["icon" => "fas fa-clinic-medical", "nilai" => "10.264", "nama" => "Jumlah Puskesmas", "tahun" => "2024", "keterangan" => "Seluruh Indonesia"],
@@ -29,7 +29,7 @@ class LandingController extends Controller
             ["icon" => "fas fa-shield-virus", "nilai" => "87%", "nama" => "Persalinan di Faskes", "tahun" => "2024", "keterangan" => "Meningkat 5%"]
         ];
 
-        // Fetch registered doctors list to showcase on the landing page dynamically!
+        // Ambil daftar dokter secara dinamis
         $doctors = User::where('role', 'dokter')->get();
         $berita = \App\Models\Berita::orderBy('tanggal', 'desc')->get();
         $provinces = $this->getProvinces();
@@ -52,7 +52,7 @@ class LandingController extends Controller
 
     public function getBpsApi()
     {
-        // Mock BPS API data
+        // Data API Mock BPS
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -77,7 +77,7 @@ class LandingController extends Controller
         $provinces = $this->getProvinces();
         $data = [];
         
-        // Define base diseases templates
+        // Definisi template penyakit dasar
         $templates = [
             ['penyakit' => 'Demam Berdarah (DBD)', 'icon' => 'fas fa-mosquito', 'base' => 300],
             ['penyakit' => 'Diare', 'icon' => 'fas fa-toilet-paper', 'base' => 600],
@@ -87,10 +87,10 @@ class LandingController extends Controller
         ];
 
         foreach ($provinces as $prov) {
-            // Generate deterministic values based on province name hash
+            // Hasilkan nilai hash deterministik
             $hash = abs(crc32($prov));
             
-            // Determine population multiplier (Java provinces and DKI have higher values)
+            // Tentukan kelipatan populasi
             $multiplier = 1.0;
             if (in_array($prov, ['Jawa Barat', 'Jawa Timur', 'Jawa Tengah'])) {
                 $multiplier = 4.5;
@@ -102,11 +102,11 @@ class LandingController extends Controller
 
             $provData = [];
             foreach ($templates as $index => $tpl) {
-                // Calculate case count deterministically
+                // Hitung jumlah kasus secara deterministik
                 $factor = (($hash + ($index * 13)) % 50) / 100 + 0.75; // range: 0.75 to 1.25
                 $kasus = round($tpl['base'] * $multiplier * $factor);
                 
-                // Determine trend deterministically
+                // Tentukan tren secara deterministik
                 $trendVal = ($hash + ($index * 17)) % 3;
                 $tren = 'tetap';
                 if ($trendVal === 0) $tren = 'naik';

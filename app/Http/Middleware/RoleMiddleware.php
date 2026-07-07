@@ -22,7 +22,7 @@ class RoleMiddleware
 
         $user = Auth::user();
         if ($user->role !== $role) {
-            // Redirect to their respective dashboards if they have a different role
+            // Redirect ke dashboard yang sesuai
             if ($user->role === 'pasien') {
                 return redirect('/pasien')->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
             } elseif ($user->role === 'dokter') {

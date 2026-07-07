@@ -115,7 +115,7 @@
                 const sidebarOverlay = document.getElementById('sidebarOverlay');
                 const appContainer = document.getElementById('appContainer');
                 
-                // Load saved collapsed state for desktop
+                // Muat status collapse tersimpan
                 if (window.innerWidth > 768) {
                     const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
                     if (isCollapsed) {
@@ -123,7 +123,7 @@
                     }
                 }
                 
-                // Toggle sidebar
+                // Alihkan sidebar
                 if (sidebarToggle) {
                     sidebarToggle.addEventListener('click', function(e) {
                         e.stopPropagation();
@@ -131,14 +131,14 @@
                             appContainer.classList.toggle('sidebar-open');
                         } else {
                             appContainer.classList.toggle('sidebar-collapsed');
-                            // Save state to localStorage
-                            const collapsed = appContainer.classList.contains('sidebar-collapsed');
+                             // Simpan status ke localStorage
+                             const collapsed = appContainer.classList.contains('sidebar-collapsed');
                             localStorage.setItem('sidebarCollapsed', collapsed);
                         }
                     });
                 }
                 
-                // Close sidebar on mobile
+                // Tutup sidebar di mobile
                 function closeMobileSidebar() {
                     if (window.innerWidth <= 768) {
                         appContainer.classList.remove('sidebar-open');
@@ -152,7 +152,7 @@
                     sidebarOverlay.addEventListener('click', closeMobileSidebar);
                 }
                 
-                // Close sidebar on mobile when window resized back to desktop
+                // Tutup sidebar mobile saat resize
                 window.addEventListener('resize', function() {
                     if (window.innerWidth > 768) {
                         appContainer.classList.remove('sidebar-open');

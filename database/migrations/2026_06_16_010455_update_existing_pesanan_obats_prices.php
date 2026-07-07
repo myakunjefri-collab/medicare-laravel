@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Update any existing orders that have 0 price to be dynamic (between Rp 35k - 95k + 15k shipping)
+        // Buat harga nol menjadi dinamis
         foreach (\App\Models\PesananObat::where('total_harga', 0)->get() as $pesanan) {
             $harga_obat = rand(35, 95) * 1000;
             $pesanan->update([
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // No operation needed for rollback as this updates data values
+        // Tidak perlu operasi rollback
     }
 };

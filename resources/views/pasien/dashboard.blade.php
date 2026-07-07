@@ -493,7 +493,7 @@
                         </span>
                     </div>
 
-                    <!-- Print layout (hidden on screen by CSS mock but shown when printed) -->
+                    <!-- Layout khusus cetak -->
                     <div id="print-area-{{ $a->id }}" class="print-area" style="display: none;">
                         <h3><i class="fas fa-notes-medical" style="color: #2b9e6e;"></i> MedicareSystem</h3>
                         <h4>KARTU ANTREAN JANJI TEMU</h4>
@@ -810,7 +810,7 @@
 
     @if($page === 'chat' && $selected_dokter)
         <script>
-            // Scroll to bottom of chat
+            // Gulir ke bawah obrolan
             document.addEventListener('DOMContentLoaded', function() {
                 var chatMessages = document.getElementById('chatMessages');
                 if (chatMessages) {
@@ -855,7 +855,7 @@
                         const item = header.parentElement;
                         item.classList.toggle('active');
                         
-                        // Close other FAQ items
+                        // Tutup item FAQ lainnya
                         const allItems = document.querySelectorAll('.faq-item');
                         allItems.forEach(i => {
                             if (i !== item) {
@@ -915,7 +915,7 @@
                 }
             ];
 
-            // Build dynamic keyword mapping for any specializations registered in the database
+            // Buat pemetaan kata kunci dinamis
             const dbSpecializations = [...new Set(doctorsData.map(doc => doc.spesialis).filter(Boolean))];
             const activeKeywordMapping = [...keywordMapping];
 
@@ -929,7 +929,7 @@
                 }
             });
 
-            // Keep track of fallback alert state, so we only append it once
+            // Lacak status peringatan cadangan
             let isFallbackAlertAppended = false;
 
             function handleChatbotSubmit(event) {
@@ -938,17 +938,17 @@
                 const messageText = inputEl.value.trim();
                 if (!messageText) return;
 
-                // 1. Render user message
+                // 1. Tampilkan pesan user
                 appendUserMessage(messageText);
                 inputEl.value = '';
 
-                // 2. Render typing indicator
+                // 2. Tampilkan indikator mengetik
                 const typingId = appendTypingIndicator();
 
-                // 3. Scroll to bottom
+                // 3. Gulir ke bawah
                 scrollToBottom();
 
-                // 4. Respond using the offline local keyword matcher (simulating response time)
+                // Jawab menggunakan pencocok offline
                 setTimeout(() => {
                     removeTypingIndicator(typingId);
                     generateBotResponseStandard(messageText);
@@ -1048,7 +1048,7 @@
             function generateBotResponseStandard(userText) {
                 const textLower = userText.toLowerCase().trim();
                 
-                // 1. GREETINGS INTENT
+                // 1. INTENT MENYAPA
                 const greetingKeywords = [
                     'halo', 'hai', 'hello', 'hi', 'selamat pagi', 'selamat siang', 'selamat sore', 'selamat malam', 
                     'assalamualaikum', 'pagi', 'siang', 'sore', 'malam', 'permisi', 'hey', 'p'
@@ -1060,7 +1060,7 @@
                     return textLower.includes(kw);
                 });
 
-                // 2. THANKS INTENT
+                // 2. INTENT TERIMAKASIH
                 const thanksKeywords = [
                     'terima kasih', 'terimakasih', 'makasih', 'suwun', 'nuhun', 'thank you', 'thanks', 'oke', 'ok', 'baik', 'sip', 'siap', 'thank'
                 ];
@@ -1071,20 +1071,20 @@
                     return textLower.includes(kw);
                 });
 
-                // 3. APPOINTMENT / ANTREAN GUIDE INTENT
+                // 3. INTENT PANDUAN ANTREAN
                 const appointmentKeywords = [
                     'janji', 'antrean', 'antri', 'daftar', 'periksa', 'berobat', 'konsultasi langsung', 
                     'poliklinik', 'cara bertemu', 'jadwal', 'tatap muka', 'ke klinik', 'temu dokter'
                 ];
                 const isAppointment = appointmentKeywords.some(kw => textLower.includes(kw));
 
-                // 4. MEDICINE / PRESCRIPTION GUIDE INTENT
+                // 4. INTENT PANDUAN OBAT
                 const medicineKeywords = [
                     'obat', 'resep', 'tebus', 'beli obat', 'pesan obat', 'bayar obat', 'bukti transfer', 'kirim obat', 'harga obat'
                 ];
                 const isMedicine = medicineKeywords.some(kw => textLower.includes(kw));
 
-                // 5. HELP / CAPABILITIES INTENT
+                // 5. INTENT BANTUAN
                 const helpKeywords = [
                     'kamu bisa apa', 'fitur', 'bantuan', 'help', 'tolong', 'panduan', 'siapa kamu', 'bot', 'cara pakai', 'menu'
                 ];
@@ -1180,7 +1180,7 @@
                             matchedDoctorsHtml = `<p style="margin-top: 10px; font-size: 0.85rem; color: #ef4444; font-style: italic;"><i class="fas fa-exclamation-circle"></i> Saat ini belum ada dokter dengan spesialisasi tersebut yang terdaftar di MedicareSystem.</p>`;
                         }
                     } else if (doctorFilterType === 'online') {
-                        // Show online/busy doctors
+                        // Tampilkan dokter online/sibuk
                         const onlineDoctors = doctorsData.filter(doc => doc.status_dokter === 'online' || doc.status_dokter === 'sibuk');
                         if (onlineDoctors.length > 0) {
                             matchedDoctorsHtml = `
@@ -1230,7 +1230,7 @@
                 let statusBadge = "";
                 let chatButton = "";
                 
-                // Parse rating
+                // Urai penilaian
                 let ratingVal = parseFloat(doc.average_rating || 0);
                 let reviewCount = parseInt(doc.review_count || 0);
 
@@ -1280,7 +1280,7 @@
                 `;
             }
 
-            // Scroll on load
+            // Gulir saat dimuat
             document.addEventListener('DOMContentLoaded', scrollToBottom);
 
             function escapeHtml(text) {

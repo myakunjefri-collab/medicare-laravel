@@ -8,19 +8,19 @@ use App\Http\Controllers\PasienController;
 use App\Http\Controllers\DokterController;
 use App\Http\Controllers\AdminController;
 
-// Landing Page & Mock API
+// Halaman Utama & Mock API
 Route::get('/', [LandingController::class, 'index']);
 Route::get('/api/bps', [LandingController::class, 'getBpsApi']);
-Route::get('/api_bps.php', [LandingController::class, 'getBpsApi']); // fallback routing for compatibility
+Route::get('/api_bps.php', [LandingController::class, 'getBpsApi']); // rute cadangan untuk kompatibilitas
 Route::get('/api/penyakit-wilayah', [LandingController::class, 'getPenyakitWilayahApi']);
 
-// Authentication
+// Autentikasi
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::any('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Pasien Routes
+// Rute Pasien
 Route::middleware(['auth', 'role:pasien'])->group(function () {
     Route::get('/pasien', [PasienController::class, 'index']);
     Route::get('/pasien/jadwal', [PasienController::class, 'jadwal']);
@@ -44,7 +44,7 @@ Route::middleware(['auth', 'role:pasien'])->group(function () {
     Route::post('/pasien/bantuan/kirim', [PasienController::class, 'kirimBantuan']);
 });
 
-// Dokter Routes
+// Rute Dokter
 Route::middleware(['auth', 'role:dokter'])->group(function () {
     Route::get('/dokter', [DokterController::class, 'index']);
     Route::post('/dokter/status/update', [DokterController::class, 'updateStatus']);
@@ -62,7 +62,7 @@ Route::middleware(['auth', 'role:dokter'])->group(function () {
     Route::get('/dokter/antrean/{id}/selesai', [DokterController::class, 'selesaiAntrean']);
 });
 
-// Admin Routes
+// Rute Admin
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index']);
     Route::get('/admin/dokter', [AdminController::class, 'dokter']);
@@ -102,12 +102,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/bantuan/{id}/hapus', [AdminController::class, 'hapusBantuan']);
 });
 
-// Symlink Helper Route for Shared Hosting (InfinityFree)
+// Helper Symlink untuk Shared Hosting
 Route::get('/generate-symlink', function () {
     $target = storage_path('app/public');
     $shortcut = public_path('storage');
     
-    // Check if the symlink or directory already exists
+    // Periksa apakah symlink/direktori ada
     if (file_exists($shortcut)) {
         if (is_link($shortcut)) {
             return response()->json(['status' => 'success', 'message' => 'Symlink already exists and is a valid symbolic link.']);

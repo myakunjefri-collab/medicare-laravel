@@ -31,7 +31,7 @@ class PasienController extends Controller
         $user = Auth::user();
         $jadwal = JadwalDokter::where('tanggal', '>=', date('Y-m-d'))->orderBy('tanggal')->get();
         
-        // Prepare events for FullCalendar
+        // Siapkan event untuk FullCalendar
         $events = [];
         $all_schedules = JadwalDokter::all();
         foreach ($all_schedules as $e) {
@@ -63,7 +63,7 @@ class PasienController extends Controller
         $konsultasi_id = null;
         $konsultasi = null;
 
-        // Retrieve consultation chat history for this patient
+        // Ambil riwayat chat pasien
         $chat_history = Konsultasi::where('pasien_id', $user->id)
             ->orderBy('updated_at', 'desc')
             ->get();
@@ -71,7 +71,7 @@ class PasienController extends Controller
         if ($dokter_id) {
             $selected_dokter = User::where('id', $dokter_id)->where('role', 'dokter')->firstOrFail();
             
-            // Check for an active consultation, or one that is finished but not yet rated.
+            // Periksa sesi aktif belum dinilai
             $konsultasi = Konsultasi::where('pasien_id', $user->id)
                 ->where('dokter_id', $dokter_id)
                 ->where(function($query) {
@@ -127,7 +127,7 @@ class PasienController extends Controller
             ]);
         }
 
-        // Retrieve list of doctors with their spec, rating, status
+        // Ambil daftar dokter
         $dokterList = User::where('role', 'dokter')
             ->orderBy('name')
             ->get()
@@ -142,7 +142,7 @@ class PasienController extends Controller
                 ];
             });
 
-        // Call Gemini API
+        // Hubungi API Gemini
         try {
             $response = \Illuminate\Support\Facades\Http::withHeaders([
                 'Content-Type' => 'application/json',
@@ -165,7 +165,7 @@ class PasienController extends Controller
                 $result = $response->json();
                 $responseText = $result['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
                 
-                // Decode the JSON returned by the model
+                // Dekode respon JSON model
                 $aiData = json_decode(trim($responseText), true);
 
                 if (json_last_error() === JSON_ERROR_NONE) {
@@ -243,7 +243,7 @@ Aturan penting:
             ]);
         }
 
-        // Do not allow sending chats if the consultation is ended
+        // Blokir jika sesi berakhir
         if ($konsultasi->status === 'selesai') {
             return redirect('/pasien/chat/' . $dokter_id)->with('error', 'Sesi konsultasi telah berakhir.');
         }
@@ -294,10 +294,10 @@ Aturan penting:
             ->where('pasien_id', $user->id)
             ->firstOrFail();
 
-        // Delete associated chat messages
-        $konsultasi->pesanChats()->delete();
+        // Hapus pesan chat terkait
+        PesanChat::where('konsultasi_id', $id)->delete();
         
-        // Delete consultation session
+        // Hapus sesi konsultasi
         $konsultasi->delete();
 
         return redirect('/pasien/chat')->with('success', 'Sesi konsultasi chat berhasil dihapus!');
@@ -327,7 +327,7 @@ Aturan penting:
 
         $user = Auth::user();
 
-        // Auto-calculate kesimpulan_awal
+        // Hitung otomatis kesimpulan awal
         $suhu = $request->suhu_tubuh ? floatval($request->suhu_tubuh) : null;
         $tensi = $request->tensi_darah;
         $detak = $request->detak_jantung ? intval($request->detak_jantung) : null;
@@ -445,7 +445,7 @@ Aturan penting:
         $resep = strtolower($rm->resep ?: '');
         $harga_obat = 0;
         
-        // Predefined market price map for common medicines (in Rupiah)
+        // Daftar harga obat standar
         $daftar_harga = [
             'paracetamol' => 8000,
             'sanamol' => 10000,
@@ -481,12 +481,12 @@ Aturan penting:
             }
         }
 
-        // If no predefined medicine matches, use a base price based on length of prescription text or a default
+        // Harga obat cadangan
         if (!$matched || $harga_obat === 0) {
-            $harga_obat = rand(15, 45) * 1000; // default range for generic/custom obat
+            $harga_obat = rand(15, 45) * 1000; // rentang harga standar
         }
 
-        $total_harga = $harga_obat + 15000; // with shipping fee
+        $total_harga = $harga_obat + 15000; // tambah biaya kirim
 
         \App\Models\PesananObat::create([
             'pasien_id' => $user->id,

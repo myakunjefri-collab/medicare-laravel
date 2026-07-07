@@ -49,7 +49,7 @@ class DokterController extends Controller
         $user = Auth::user();
         $jadwal = JadwalDokter::where('tanggal', '>=', date('Y-m-d'))->orderBy('tanggal')->get();
 
-        // Prepare events for FullCalendar
+        // Siapkan event untuk FullCalendar
         $events = [];
         foreach ($jadwal as $e) {
             $warna = '#2b9e6e';
@@ -124,7 +124,7 @@ class DokterController extends Controller
         if ($chat_id) {
             $selected_chat = Konsultasi::where('id', $chat_id)->where('dokter_id', $user->id)->firstOrFail();
             
-            // Mark incoming patient messages as read
+            // Tandai pesan masuk sudah dibaca
             PesanChat::where('konsultasi_id', $chat_id)
                 ->where('pengirim', 'pasien')
                 ->update(['is_read' => true]);
@@ -207,7 +207,7 @@ class DokterController extends Controller
         ]);
 
         if ($request->status_diagnosa === 'parah') {
-            // Determine Poliklinik & Prefix
+            // Tentukan poliklinik dan prefix
             $spec = strtolower($user->spesialis ?? '');
             $poli = "Poli Umum";
             $prefix = "U";
@@ -234,7 +234,7 @@ class DokterController extends Controller
             $tgl_janji = $request->tgl_janji ?? date('Y-m-d', strtotime('+2 days'));
             $jam_janji = $request->jam_janji ?? '10:00';
 
-            // Calculate sequential queue number for that polyclinic and date
+            // Hitung nomor antrean berikutnya
             $existing_count = JanjiTemu::where('poli', $poli)
                 ->where('tanggal', $tgl_janji)
                 ->count();

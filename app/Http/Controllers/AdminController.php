@@ -118,7 +118,7 @@ class AdminController extends Controller
         $jadwal_list = JadwalDokter::orderBy('tanggal', 'desc')->get();
         $dokter_list = User::where('role', 'dokter')->orderBy('name')->get();
 
-        // Prepare events for FullCalendar
+        // Siapkan event untuk FullCalendar
         $events = [];
         foreach ($jadwal_list as $e) {
             $warna = '#2b9e6e';
@@ -231,7 +231,7 @@ class AdminController extends Controller
         ];
 
         if ($request->hasFile('gambar')) {
-            // Delete old image if it exists
+            // Hapus gambar lama jika ada
             if ($berita->gambar && \Illuminate\Support\Facades\Storage::disk('public')->exists($berita->gambar)) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($berita->gambar);
             }
