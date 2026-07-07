@@ -327,13 +327,6 @@
                     </div>
                     <button type="submit" class="btn"><i class="fas fa-sign-in-alt"></i> Masuk Sekarang</button>
                 </form>
-                
-                <div class="demo-info">
-                    <i class="fas fa-flask" style="color: #2b9e6e; margin-right: 5px;"></i> <strong>Akun Uji Coba (Demo):</strong><br>
-                    <span style="display:inline-block; width: 60px; font-weight: 600;">🟢 Pasien:</span> pasien@med.com / pasien123<br>
-                    <span style="display:inline-block; width: 60px; font-weight: 600;">🔵 Dokter:</span> dokter1@med.com / dokter123<br>
-                    <span style="display:inline-block; width: 60px; font-weight: 600;">🔴 Admin:</span> admin@med.com / admin123
-                </div>
             </div>
 
             <!-- REGISTER FORM -->
