@@ -509,6 +509,134 @@ class MedicareSystemTest extends TestCase
             'konsultasi_id' => $konsultasi->id,
         ]);
     }
+
+    public function test_admin_edit_delete_features()
+    {
+        $this->seed();
+
+        $admin = User::where('email', 'admin@med.com')->first();
+        $patient = User::where('email', 'pasien@med.com')->first();
+        $doctor = User::where('email', 'dokter1@med.com')->first();
+
+        // 1. Create resources to edit/delete
+        $janji = \App\Models\JanjiTemu::create([
+            'pasien_id' => $patient->id,
+            'pasien_name' => $patient->name,
+            'dokter_name' => $doctor->name,
+            'poli' => 'Poli Umum',
+            'tanggal' => date('Y-m-d'),
+            'jam' => '09:00',
+            'status' => 'menunggu',
+            'nomor_antrean' => 'A-01',
+            'keluhan' => 'Pusing kepala',
+        ]);
+
+        $rekam = \App\Models\RekamMedis::create([
+            'pasien_id' => $patient->id,
+            'pasien_name' => $patient->name,
+            'keluhan' => 'Demam tinggi',
+            'usia' => 25,
+            'tanggal' => date('Y-m-d'),
+            'status' => 'menunggu',
+        ]);
+
+        $pesanan = \App\Models\PesananObat::create([
+            'pasien_id' => $patient->id,
+            'pasien_name' => $patient->name,
+            'rekam_medis_id' => $rekam->id,
+            'resep' => 'Paracetamol',
+            'alamat_kirim' => 'Jalan Kenangan No. 5',
+            'total_harga' => 15000,
+            'status' => 'menunggu_pembayaran',
+        ]);
+
+        $bantuan = \App\Models\CustomerService::create([
+            'pasien_id' => $patient->id,
+            'pasien_name' => $patient->name,
+            'pesan' => 'Bagaimana cara bayar obat?',
+            'status' => 'menunggu',
+        ]);
+
+        // 2. Test Editing JanjiTemu
+        $response = $this->actingAs($admin)->post('/admin/janji-temu/' . $janji->id . '/update', [
+            'pasien_id' => $patient->id,
+            'dokter_name' => 'dr. Sarah Melati, Sp.A',
+            'poli' => 'Poli Anak',
+            'tanggal' => date('Y-m-d'),
+            'jam' => '11:00',
+            'nomor_antrean' => 'B-02',
+            'status' => 'konfirmasi',
+            'keluhan' => 'Batuk pilek',
+        ]);
+        $response->assertRedirect('/admin/janji-temu');
+        $this->assertDatabaseHas('janji_temus', [
+            'id' => $janji->id,
+            'dokter_name' => 'dr. Sarah Melati, Sp.A',
+            'poli' => 'Poli Anak',
+            'jam' => '11:00',
+            'status' => 'konfirmasi',
+        ]);
+
+        // 3. Test Deleting JanjiTemu
+        $response = $this->actingAs($admin)->get('/admin/janji-temu/' . $janji->id . '/hapus');
+        $response->assertRedirect('/admin/janji-temu');
+        $this->assertDatabaseMissing('janji_temus', ['id' => $janji->id]);
+
+        // 4. Test Editing RekamMedis
+        $response = $this->actingAs($admin)->post('/admin/rekam-medis/' . $rekam->id . '/update', [
+            'pasien_id' => $patient->id,
+            'keluhan' => 'Demam berdarah',
+            'usia' => 26,
+            'tensi_darah' => '110/70',
+            'suhu_tubuh' => 38.5,
+            'detak_jantung' => 85,
+            'berat_badan' => 60,
+            'kesimpulan_awal' => 'Suhu di atas normal',
+            'tanggal' => date('Y-m-d'),
+            'status' => 'selesai',
+            'diagnosa' => 'Dengue Fever',
+            'resep' => 'Obat penurun panas',
+        ]);
+        $response->assertRedirect('/admin/rekam-medis');
+        $this->assertDatabaseHas('rekam_medis', [
+            'id' => $rekam->id,
+            'keluhan' => 'Demam berdarah',
+            'usia' => 26,
+            'suhu_tubuh' => 38.5,
+            'diagnosa' => 'Dengue Fever',
+        ]);
+
+        // 5. Test Deleting RekamMedis
+        $response = $this->actingAs($admin)->get('/admin/rekam-medis/' . $rekam->id . '/hapus');
+        $response->assertRedirect('/admin/rekam-medis');
+        $this->assertDatabaseMissing('rekam_medis', ['id' => $rekam->id]);
+
+        // 6. Test Editing PesananObat
+        $response = $this->actingAs($admin)->post('/admin/pesanan-obat/' . $pesanan->id . '/update', [
+            'resep' => 'Ibuprofen 400mg',
+            'alamat_kirim' => 'Jalan Damai No. 10',
+            'total_harga' => 20000,
+            'status' => 'diproses',
+        ]);
+        $response->assertRedirect('/admin/pesanan-obat');
+        $this->assertDatabaseHas('pesanan_obats', [
+            'id' => $pesanan->id,
+            'resep' => 'Ibuprofen 400mg',
+            'alamat_kirim' => 'Jalan Damai No. 10',
+            'total_harga' => 20000,
+            'status' => 'diproses',
+        ]);
+
+        // 7. Test Deleting PesananObat
+        $response = $this->actingAs($admin)->get('/admin/pesanan-obat/' . $pesanan->id . '/hapus');
+        $response->assertRedirect('/admin/pesanan-obat');
+        $this->assertDatabaseMissing('pesanan_obats', ['id' => $pesanan->id]);
+
+        // 8. Test Deleting CustomerService ticket
+        $response = $this->actingAs($admin)->get('/admin/bantuan/' . $bantuan->id . '/hapus');
+        $response->assertRedirect('/admin/bantuan');
+        $this->assertDatabaseMissing('customer_services', ['id' => $bantuan->id]);
+    }
 }
 
 

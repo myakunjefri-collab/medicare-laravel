@@ -77,17 +77,29 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/jadwal/{id}/hapus', [AdminController::class, 'hapusJadwal']);
     Route::get('/admin/janji-temu', [AdminController::class, 'janji']);
     Route::get('/admin/janji-temu/{id}/update-status', [AdminController::class, 'updateStatusJanji']);
+    Route::post('/admin/janji-temu/{id}/update', [AdminController::class, 'updateJanji']);
+    Route::get('/admin/janji-temu/{id}/hapus', [AdminController::class, 'hapusJanji']);
+    
     Route::get('/admin/rekam-medis', [AdminController::class, 'rekam']);
+    Route::post('/admin/rekam-medis/{id}/update', [AdminController::class, 'updateRekam']);
+    Route::get('/admin/rekam-medis/{id}/hapus', [AdminController::class, 'hapusRekam']);
+
     Route::get('/admin/berita', [AdminController::class, 'berita']);
     Route::post('/admin/berita/tambah', [AdminController::class, 'tambahBerita']);
     Route::post('/admin/berita/{id}/edit', [AdminController::class, 'editBerita']);
     Route::get('/admin/berita/{id}/hapus', [AdminController::class, 'hapusBerita']);
+    
     Route::get('/admin/pesanan-obat', [AdminController::class, 'pesananObat']);
     Route::get('/admin/pesanan-obat/{id}/update-status', [AdminController::class, 'updateStatusPesanan']);
+    Route::post('/admin/pesanan-obat/{id}/update', [AdminController::class, 'updatePesanan']);
+    Route::get('/admin/pesanan-obat/{id}/hapus', [AdminController::class, 'hapusPesanan']);
+
     Route::post('/admin/jadwal/tambah', [AdminController::class, 'tambahJadwal']);
     Route::post('/admin/jadwal/{id}/update', [AdminController::class, 'updateJadwal']);
+    
     Route::get('/admin/bantuan', [AdminController::class, 'bantuan']);
     Route::post('/admin/bantuan/{id}/balas', [AdminController::class, 'balasBantuan']);
+    Route::get('/admin/bantuan/{id}/hapus', [AdminController::class, 'hapusBantuan']);
 });
 
 // Symlink Helper Route for Shared Hosting (InfinityFree)

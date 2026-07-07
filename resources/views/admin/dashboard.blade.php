@@ -403,6 +403,7 @@
                             <th>Nomor Antrean</th>
                             <th>Status Antrean</th>
                             <th>Perbarui Status</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -429,14 +430,81 @@
                                         <option value="dibatalkan" {{ $j->status === 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                                     </select>
                                 </td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditJanji({{ json_encode($j) }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <a href="/admin/janji-temu/{{ $j->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus janji temu ini?')">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" style="text-align: center;">Belum ada janji temu pasien terdaftar.</td>
+                                <td colspan="8" style="text-align: center;">Belum ada janji temu pasien terdaftar.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- EDIT JANJI TEMU MODAL -->
+        <div id="modalEditJanji" class="modal">
+            <div class="modal-content">
+                <h3>Edit Janji Temu Pasien</h3>
+                <form id="formEditJanji" action="" method="POST" style="margin-top: 15px;">
+                    @csrf
+                    <div class="form-group">
+                        <label for="edit_janji_pasien">Pilih Pasien</label>
+                        <select name="pasien_id" id="edit_janji_pasien" required style="padding: 10px; border-radius: 8px; width: 100%;">
+                            @foreach($pasien_list as $pas)
+                                <option value="{{ $pas->id }}">{{ $pas->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_janji_dokter_name">Nama Dokter</label>
+                        <input type="text" name="dokter_name" id="edit_janji_dokter_name" required placeholder="Contoh: dr. Andi Wijaya, Sp.PD">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_janji_poli">Poli / Spesialisasi</label>
+                        <input type="text" name="poli" id="edit_janji_poli" required placeholder="Contoh: Poli Umum, Poli Jantung">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_janji_tanggal">Tanggal</label>
+                            <input type="date" name="tanggal" id="edit_janji_tanggal" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_janji_jam">Jam</label>
+                            <input type="text" name="jam" id="edit_janji_jam" required placeholder="Contoh: 10:00 - 11:00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_janji_antrean">Nomor Antrean</label>
+                            <input type="text" name="nomor_antrean" id="edit_janji_antrean" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_janji_status">Status</label>
+                            <select name="status" id="edit_janji_status" required style="width: 100%;">
+                                <option value="menunggu">Menunggu</option>
+                                <option value="konfirmasi">Konfirmasi</option>
+                                <option value="selesai">Selesai</option>
+                                <option value="dibatalkan">Dibatalkan</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_janji_keluhan">Keluhan</label>
+                        <textarea name="keluhan" id="edit_janji_keluhan" rows="3" required placeholder="Tulis keluhan pasien..."></textarea>
+                    </div>
+                    <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-danger" onclick="tutupModalEditJanji()">Batal</button>
+                        <button type="submit" class="btn">Simpan Perubahan</button>
+                    </div>
+                </form>
             </div>
         </div>
     @endif
@@ -455,6 +523,7 @@
                             <th>Diagnosa Dokter</th>
                             <th>Resep Obat</th>
                             <th>Status Pemeriksaan</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -470,14 +539,99 @@
                                         {{ $r->status }}
                                     </span>
                                 </td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditRekam({{ json_encode($r) }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <a href="/admin/rekam-medis/{{ $r->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus rekam medis ini?')">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" style="text-align: center;">Belum ada rekam medis terdaftar di log.</td>
+                                <td colspan="7" style="text-align: center;">Belum ada rekam medis terdaftar di log.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- EDIT REKAM MEDIS MODAL -->
+        <div id="modalEditRekam" class="modal">
+            <div class="modal-content">
+                <h3>Edit Rekam Medis Pasien</h3>
+                <form id="formEditRekam" action="" method="POST" style="margin-top: 15px;">
+                    @csrf
+                    <div class="form-group">
+                        <label for="edit_rekam_pasien">Pilih Pasien</label>
+                        <select name="pasien_id" id="edit_rekam_pasien" required style="padding: 10px; border-radius: 8px; width: 100%;">
+                            @foreach($pasien_list as $pas)
+                                <option value="{{ $pas->id }}">{{ $pas->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_rekam_keluhan">Keluhan Utama</label>
+                        <textarea name="keluhan" id="edit_rekam_keluhan" rows="2" required placeholder="Tulis keluhan utama pasien..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_rekam_usia">Usia (Tahun)</label>
+                            <input type="number" name="usia" id="edit_rekam_usia" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_rekam_tensi">Tensi Darah</label>
+                            <input type="text" name="tensi_darah" id="edit_rekam_tensi" placeholder="Contoh: 120/80">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_rekam_suhu">Suhu Tubuh (°C)</label>
+                            <input type="number" step="0.01" name="suhu_tubuh" id="edit_rekam_suhu" placeholder="Contoh: 36.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_rekam_detak">Detak Jantung (bpm)</label>
+                            <input type="number" name="detak_jantung" id="edit_rekam_detak" placeholder="Contoh: 80">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_rekam_berat">Berat Badan (kg)</label>
+                            <input type="number" name="berat_badan" id="edit_rekam_berat" placeholder="Contoh: 65">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_rekam_tanggal">Tanggal Pemeriksaan</label>
+                            <input type="date" name="tanggal" id="edit_rekam_tanggal" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_rekam_kesimpulan">Kesimpulan Awal / Catatan Vitals</label>
+                        <textarea name="kesimpulan_awal" id="edit_rekam_kesimpulan" rows="2" placeholder="Tulis catatan pemeriksaan awal..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_rekam_diagnosa">Diagnosa Akhir Dokter</label>
+                            <input type="text" name="diagnosa" id="edit_rekam_diagnosa" placeholder="Diagnosa dokter...">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_rekam_status">Status Pemeriksaan</label>
+                            <select name="status" id="edit_rekam_status" required style="width: 100%;">
+                                <option value="menunggu">Menunggu</option>
+                                <option value="selesai">Selesai</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_rekam_resep">Resep Obat</label>
+                        <textarea name="resep" id="edit_rekam_resep" rows="2" placeholder="Tulis resep obat jika ada..."></textarea>
+                    </div>
+                    <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-danger" onclick="tutupModalEditRekam()">Batal</button>
+                        <button type="submit" class="btn">Simpan Perubahan</button>
+                    </div>
+                </form>
             </div>
         </div>
     @endif
@@ -604,6 +758,7 @@
                             <th>Bukti Transfer</th>
                             <th>Status</th>
                             <th>Tindakan</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -643,14 +798,64 @@
                                         <option value="dibatalkan" {{ $p->status === 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                                     </select>
                                 </td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditPesanan({{ json_encode($p) }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <a href="/admin/pesanan-obat/{{ $p->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus pesanan obat ini?')">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" style="text-align: center;">Belum ada pesanan obat dari pasien.</td>
+                                <td colspan="10" style="text-align: center;">Belum ada pesanan obat dari pasien.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- EDIT PESANAN OBAT MODAL -->
+        <div id="modalEditPesanan" class="modal">
+            <div class="modal-content">
+                <h3>Edit Pesanan Obat</h3>
+                <form id="formEditPesanan" action="" method="POST" style="margin-top: 15px;">
+                    @csrf
+                    <div class="form-group">
+                        <label>Nama Pasien</label>
+                        <input type="text" id="edit_pesanan_pasien_name" readonly style="background: #f1f5f9; border-color: #cbd5e1; color: #64748b; width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_pesanan_resep">Resep / Nama Obat</label>
+                        <input type="text" name="resep" id="edit_pesanan_resep" required placeholder="Contoh: Paracetamol 500mg, Amoxicillin">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_pesanan_alamat">Alamat Kirim</label>
+                        <textarea name="alamat_kirim" id="edit_pesanan_alamat" rows="2" required placeholder="Alamat lengkap pengiriman..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_pesanan_harga">Total Harga (Rp)</label>
+                            <input type="number" name="total_harga" id="edit_pesanan_harga" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_pesanan_status">Status Pesanan</label>
+                            <select name="status" id="edit_pesanan_status" required style="width: 100%;">
+                                <option value="menunggu_pembayaran">Menunggu Pembayaran</option>
+                                <option value="diproses">Diproses</option>
+                                <option value="dikirim">Dikirim</option>
+                                <option value="selesai">Selesai</option>
+                                <option value="dibatalkan">Dibatalkan</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-danger" onclick="tutupModalEditPesanan()">Batal</button>
+                        <button type="submit" class="btn">Simpan Perubahan</button>
+                    </div>
+                </form>
             </div>
         </div>
     @endif
@@ -870,10 +1075,16 @@
                                     <a href="/admin/bantuan/{{ $b->id }}/selesai" class="btn btn-sm btn-success" onclick="return confirm('Apakah Anda yakin ingin menyelesaikan tiket ini tanpa balasan?')">
                                         <i class="fas fa-check"></i> Tandai Selesai
                                     </a>
+                                    <a href="/admin/bantuan/{{ $b->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus tiket bantuan ini?')">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </a>
                                 </div>
                             @else
-                                <div class="ticket-action-bar" style="border: none; padding-top: 0; margin-top: 8px;">
+                                <div class="ticket-action-bar" style="border: none; padding-top: 0; margin-top: 8px; display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                     <span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;"><i class="fas fa-lock"></i> Tiket Ditutup (Closed)</span>
+                                    <a href="/admin/bantuan/{{ $b->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus tiket bantuan ini?')">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </a>
                                 </div>
                             @endif
                         </div>
@@ -1146,6 +1357,67 @@
             }
             function tutupModalBalasBantuan() {
                 document.getElementById('modalBalasBantuan').style.display = 'none';
+            }
+        </script>
+    @endif
+
+    @if($page === 'janji')
+        <script>
+            function bukaModalEditJanji(janji) {
+                document.getElementById('formEditJanji').action = '/admin/janji-temu/' + janji.id + '/update';
+                document.getElementById('edit_janji_pasien').value = janji.pasien_id;
+                document.getElementById('edit_janji_dokter_name').value = janji.dokter_name;
+                document.getElementById('edit_janji_poli').value = janji.poli || '';
+                document.getElementById('edit_janji_tanggal').value = janji.tanggal;
+                document.getElementById('edit_janji_jam').value = janji.jam;
+                document.getElementById('edit_janji_antrean').value = janji.nomor_antrean;
+                document.getElementById('edit_janji_status').value = janji.status;
+                document.getElementById('edit_janji_keluhan').value = janji.keluhan || '';
+                document.getElementById('modalEditJanji').style.display = 'flex';
+            }
+            function tutupModalEditJanji() {
+                document.getElementById('modalEditJanji').style.display = 'none';
+            }
+        </script>
+    @endif
+
+    @if($page === 'rekam')
+        <script>
+            function bukaModalEditRekam(rekam) {
+                document.getElementById('formEditRekam').action = '/admin/rekam-medis/' + rekam.id + '/update';
+                document.getElementById('edit_rekam_pasien').value = rekam.pasien_id;
+                document.getElementById('edit_rekam_keluhan').value = rekam.keluhan || '';
+                document.getElementById('edit_rekam_usia').value = rekam.usia || '';
+                document.getElementById('edit_rekam_tensi').value = rekam.tensi_darah || '';
+                document.getElementById('edit_rekam_suhu').value = rekam.suhu_tubuh || '';
+                document.getElementById('edit_rekam_detak').value = rekam.detak_jantung || '';
+                document.getElementById('edit_rekam_berat').value = rekam.berat_badan || '';
+                document.getElementById('edit_rekam_tanggal').value = rekam.tanggal;
+                document.getElementById('edit_rekam_kesimpulan').value = rekam.kesimpulan_awal || '';
+                document.getElementById('edit_rekam_diagnosa').value = rekam.diagnosa || '';
+                document.getElementById('edit_rekam_status').value = rekam.status;
+                document.getElementById('edit_rekam_resep').value = rekam.resep || '';
+                document.getElementById('modalEditRekam').style.display = 'flex';
+            }
+            function tutupModalEditRekam() {
+                document.getElementById('modalEditRekam').style.display = 'none';
+            }
+        </script>
+    @endif
+
+    @if($page === 'pesanan_obat')
+        <script>
+            function bukaModalEditPesanan(pesanan) {
+                document.getElementById('formEditPesanan').action = '/admin/pesanan-obat/' + pesanan.id + '/update';
+                document.getElementById('edit_pesanan_pasien_name').value = pesanan.pasien_name;
+                document.getElementById('edit_pesanan_resep').value = pesanan.resep;
+                document.getElementById('edit_pesanan_alamat').value = pesanan.alamat_kirim;
+                document.getElementById('edit_pesanan_harga').value = pesanan.total_harga;
+                document.getElementById('edit_pesanan_status').value = pesanan.status;
+                document.getElementById('modalEditPesanan').style.display = 'flex';
+            }
+            function tutupModalEditPesanan() {
+                document.getElementById('modalEditPesanan').style.display = 'none';
             }
         </script>
     @endif

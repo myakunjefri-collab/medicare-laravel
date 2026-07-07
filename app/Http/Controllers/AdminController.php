@@ -152,8 +152,10 @@ class AdminController extends Controller
     {
         $user = Auth::user();
         $janji_list = JanjiTemu::orderBy('tanggal', 'desc')->get();
+        $dokter_list = User::where('role', 'dokter')->orderBy('name')->get();
+        $pasien_list = User::where('role', 'pasien')->orderBy('name')->get();
 
-        return view('admin.dashboard', compact('user', 'janji_list'))
+        return view('admin.dashboard', compact('user', 'janji_list', 'dokter_list', 'pasien_list'))
             ->with('page', 'janji');
     }
 
@@ -175,8 +177,9 @@ class AdminController extends Controller
     {
         $user = Auth::user();
         $rekam_list = RekamMedis::orderBy('tanggal', 'desc')->get();
+        $pasien_list = User::where('role', 'pasien')->orderBy('name')->get();
 
-        return view('admin.dashboard', compact('user', 'rekam_list'))
+        return view('admin.dashboard', compact('user', 'rekam_list', 'pasien_list'))
             ->with('page', 'rekam');
     }
 
@@ -432,5 +435,127 @@ class AdminController extends Controller
         ]);
 
         return redirect('/admin/bantuan')->with('success', 'Tiket bantuan ditandai selesai!');
+    }
+
+    public function updateJanji(Request $request, $id)
+    {
+        $request->validate([
+            'pasien_id' => 'required|exists:users,id',
+            'dokter_name' => 'required|string|max:100',
+            'poli' => 'required|string|max:100',
+            'tanggal' => 'required|date',
+            'jam' => 'required|string|max:50',
+            'nomor_antrean' => 'required|string|max:50',
+            'status' => 'required|in:menunggu,konfirmasi,selesai,dibatalkan',
+            'keluhan' => 'required|string',
+        ]);
+
+        $janji = JanjiTemu::findOrFail($id);
+        $pasien = User::findOrFail($request->pasien_id);
+
+        $janji->update([
+            'pasien_id' => $pasien->id,
+            'pasien_name' => $pasien->name,
+            'dokter_name' => $request->dokter_name,
+            'poli' => $request->poli,
+            'tanggal' => $request->tanggal,
+            'jam' => $request->jam,
+            'nomor_antrean' => $request->nomor_antrean,
+            'status' => $request->status,
+            'keluhan' => $request->keluhan,
+        ]);
+
+        return redirect('/admin/janji-temu')->with('success', 'Janji Temu berhasil diperbarui!');
+    }
+
+    public function hapusJanji($id)
+    {
+        $janji = JanjiTemu::findOrFail($id);
+        $janji->delete();
+
+        return redirect('/admin/janji-temu')->with('success', 'Janji Temu berhasil dihapus!');
+    }
+
+    public function updateRekam(Request $request, $id)
+    {
+        $request->validate([
+            'pasien_id' => 'required|exists:users,id',
+            'keluhan' => 'required|string',
+            'usia' => 'nullable|integer|min:0',
+            'tensi_darah' => 'nullable|string|max:20',
+            'suhu_tubuh' => 'nullable|numeric|min:0|max:50',
+            'detak_jantung' => 'nullable|integer|min:0',
+            'berat_badan' => 'nullable|integer|min:0',
+            'kesimpulan_awal' => 'nullable|string',
+            'tanggal' => 'required|date',
+            'status' => 'required|string',
+            'diagnosa' => 'nullable|string',
+            'resep' => 'nullable|string',
+        ]);
+
+        $rekam = RekamMedis::findOrFail($id);
+        $pasien = User::findOrFail($request->pasien_id);
+
+        $rekam->update([
+            'pasien_id' => $pasien->id,
+            'pasien_name' => $pasien->name,
+            'keluhan' => $request->keluhan,
+            'usia' => $request->usia,
+            'tensi_darah' => $request->tensi_darah,
+            'suhu_tubuh' => $request->suhu_tubuh,
+            'detak_jantung' => $request->detak_jantung,
+            'berat_badan' => $request->berat_badan,
+            'kesimpulan_awal' => $request->kesimpulan_awal,
+            'tanggal' => $request->tanggal,
+            'status' => $request->status,
+            'diagnosa' => $request->diagnosa,
+            'resep' => $request->resep,
+        ]);
+
+        return redirect('/admin/rekam-medis')->with('success', 'Rekam Medis berhasil diperbarui!');
+    }
+
+    public function hapusRekam($id)
+    {
+        $rekam = RekamMedis::findOrFail($id);
+        $rekam->delete();
+
+        return redirect('/admin/rekam-medis')->with('success', 'Rekam Medis berhasil dihapus!');
+    }
+
+    public function updatePesanan(Request $request, $id)
+    {
+        $request->validate([
+            'resep' => 'required|string|max:255',
+            'alamat_kirim' => 'required|string|max:255',
+            'total_harga' => 'required|integer|min:0',
+            'status' => 'required|in:menunggu_pembayaran,diproses,dikirim,selesai,dibatalkan',
+        ]);
+
+        $pesanan = \App\Models\PesananObat::findOrFail($id);
+        $pesanan->update([
+            'resep' => $request->resep,
+            'alamat_kirim' => $request->alamat_kirim,
+            'total_harga' => $request->total_harga,
+            'status' => $request->status,
+        ]);
+
+        return redirect('/admin/pesanan-obat')->with('success', 'Pesanan obat berhasil diperbarui!');
+    }
+
+    public function hapusPesanan($id)
+    {
+        $pesanan = \App\Models\PesananObat::findOrFail($id);
+        $pesanan->delete();
+
+        return redirect('/admin/pesanan-obat')->with('success', 'Pesanan obat berhasil dihapus!');
+    }
+
+    public function hapusBantuan($id)
+    {
+        $bantuan = \App\Models\CustomerService::findOrFail($id);
+        $bantuan->delete();
+
+        return redirect('/admin/bantuan')->with('success', 'Tiket bantuan berhasil dihapus!');
     }
 }
