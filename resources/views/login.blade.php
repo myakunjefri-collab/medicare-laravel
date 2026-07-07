@@ -327,6 +327,30 @@
                     </div>
                     <button type="submit" class="btn"><i class="fas fa-sign-in-alt"></i> Masuk Sekarang</button>
                 </form>
+                
+                <!-- DEMO ACCOUNTS INFO -->
+                <div class="demo-info">
+                    <div style="font-weight: 700; margin-bottom: 8px; color: #0b2b4d; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-info-circle" style="color: #175a78;"></i> <span>Informasi Akun Demo (Uji Coba)</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: left; font-size: 0.75rem;">
+                        <div style="background: rgba(255,255,255,0.7); padding: 8px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <strong style="color: #2b9e6e; display: block; margin-bottom: 4px;"><i class="fas fa-user-injured"></i> Pasien</strong>
+                            User: <code>pasien</code><br>
+                            Pass: <code>pasien123</code>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.7); padding: 8px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <strong style="color: #175a78; display: block; margin-bottom: 4px;"><i class="fas fa-user-md"></i> Dokter</strong>
+                            User: <code>dokter1</code><br>
+                            Pass: <code>dokter123</code>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.7); padding: 8px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <strong style="color: #64748b; display: block; margin-bottom: 4px;"><i class="fas fa-user-shield"></i> Admin</strong>
+                            User: <code>admin</code><br>
+                            Pass: <code>admin123</code>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- REGISTER FORM -->
