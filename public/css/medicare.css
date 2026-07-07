@@ -317,6 +317,13 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 8px 20px rgba(245, 158, 11, 0.35);
 }
 
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
 /* Tables */
 .table-responsive {
     width: 100%;

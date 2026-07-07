@@ -103,12 +103,14 @@
                                 <td>{{ $d->no_hp ?: '-' }}</td>
                                 <td>{{ $d->username }}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditDokter({{ json_encode($d) }})">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <a href="/admin/dokter/{{ $d->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus akun Dokter ini?')">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </a>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-warning" onclick="bukaModalEditDokter({{ json_encode($d) }})">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <a href="/admin/dokter/{{ $d->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus akun Dokter ini?')">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -222,12 +224,14 @@
                                 <td>{{ $p->alamat ?: '-' }}</td>
                                 <td>{{ date('d/m/Y H:i', strtotime($p->created_at)) }}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditPasien({{ json_encode($p) }})">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <a href="/admin/pasien/{{ $p->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus akun Pasien ini?')">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </a>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-warning" onclick="bukaModalEditPasien({{ json_encode($p) }})">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <a href="/admin/pasien/{{ $p->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus akun Pasien ini?')">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -369,12 +373,14 @@
                                 <td>{{ $j->ruangan ?: '-' }}</td>
                                 <td>{{ $j->kuota }} Pasien</td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditJadwal({{ json_encode($j) }})">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <a href="/admin/jadwal/{{ $j->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus jadwal ini?')">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </a>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-warning" onclick="bukaModalEditJadwal({{ json_encode($j) }})">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <a href="/admin/jadwal/{{ $j->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus jadwal ini?')">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -431,12 +437,14 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditJanji({{ json_encode($j) }})">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <a href="/admin/janji-temu/{{ $j->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus janji temu ini?')">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </a>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-warning" onclick="bukaModalEditJanji({{ json_encode($j) }})">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <a href="/admin/janji-temu/{{ $j->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus janji temu ini?')">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -540,12 +548,14 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditRekam({{ json_encode($r) }})">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <a href="/admin/rekam-medis/{{ $r->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus rekam medis ini?')">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </a>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-warning" onclick="bukaModalEditRekam({{ json_encode($r) }})">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <a href="/admin/rekam-medis/{{ $r->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus rekam medis ini?')">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -685,12 +695,14 @@
                                 <td><strong>{{ $b->judul }}</strong></td>
                                 <td>{{ Str::limit($b->konten, 90) }}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditBerita({{ json_encode($b) }})">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <a href="/admin/berita/{{ $b->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus berita ini?')">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </a>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-warning" onclick="bukaModalEditBerita({{ json_encode($b) }})">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <a href="/admin/berita/{{ $b->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus berita ini?')">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -799,12 +811,14 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning" onclick="bukaModalEditPesanan({{ json_encode($p) }})">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <a href="/admin/pesanan-obat/{{ $p->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus pesanan obat ini?')">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </a>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-warning" onclick="bukaModalEditPesanan({{ json_encode($p) }})">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <a href="/admin/pesanan-obat/{{ $p->id }}/hapus" class="btn btn-sm btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus pesanan obat ini?')">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
